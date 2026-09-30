@@ -1,10 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/ogafix_models.dart';
 import '../../models/user_profile_model.dart';
+import '../chat/chat_screen.dart';
 import '../profile/user_profile_screen.dart';
 import 'map_search_screen.dart';
 import 'post_job_screen.dart';
+import 'search_screen.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -229,143 +232,198 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               },
             ),
             const SizedBox(height: 24),
-            // Recommended Professionals (Greenish Design Boxes - Screenshot 3 Style)
+            // Live Firestore & Mock Professionals Near You
             const Text(
-              'Verified Professionals Near You',
+              'Verified Professionals Near You (Live & Tested)',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: MockData.professionals.length,
-              itemBuilder: (context, index) {
-                final pro = MockData.professionals[index];
-                return InkWell(
-                  onTap: () {
-                    final userProfile = UserProfile(
-                      uid: pro.id,
-                      email:
-                          '${pro.name.toLowerCase().replaceAll(' ', '')}@ogafix.ng',
-                      phone: '+2348000000000',
-                      role: 'professional',
-                      fullName: pro.name,
-                      state: pro.state,
-                      lga: pro.lga,
-                      stateOfOrigin: 'Lagos State',
-                      age: 32,
-                      yearsOfExperience: 6,
-                      profession: pro.profession,
-                      ninNumber: '29384756102',
-                      description: 'Certified master artisan with over 6 years of professional experience handling residential and commercial repairs across Lagos State.',
-                      profileImageUrl: '',
-                      verificationLevel: pro.verificationLevel,
-                      emailVerified: true,
-                      phoneVerified: true,
-                      ninVerified: true,
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('professional_profiles')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                List<UserProfile> firestorePros = [];
+                if (snapshot.hasData) {
+                  firestorePros = snapshot.data!.docs.map((doc) {
+                    return UserProfile.fromMap(
+                      doc.data() as Map<String, dynamic>,
                     );
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            UserProfileScreen(profile: userProfile),
+                  }).toList();
+                }
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount:
+                      firestorePros.length + MockData.professionals.length,
+                  itemBuilder: (context, index) {
+                    UserProfile profile;
+                    if (index < firestorePros.length) {
+                      profile = firestorePros[index];
+                    } else {
+                      final pro =
+                          MockData.professionals[index - firestorePros.length];
+                      profile = UserProfile(
+                        uid: pro.id,
+                        email:
+                            '${pro.name.toLowerCase().replaceAll(' ', '')}@ogafix.ng',
+                        phone: '+2348000000000',
+                        role: 'professional',
+                        fullName: pro.name,
+                        state: pro.state,
+                        lga: pro.lga,
+                        stateOfOrigin: 'Lagos State',
+                        age: 32,
+                        yearsOfExperience: 6,
+                        profession: pro.profession,
+                        ninNumber: '29384756102',
+                        description: 'Certified master artisan with over 6 years of professional experience handling repairs across Lagos.',
+                        profileImageUrl: '',
+                        verificationLevel: pro.verificationLevel,
+                        emailVerified: true,
+                        phoneVerified: true,
+                        ninVerified: true,
+                      );
+                    }
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 14),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.green.shade200,
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.green.withValues(alpha: 0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      UserProfileScreen(profile: profile),
+                                ),
+                              );
+                            },
+                            child: CircleAvatar(
+                              radius: 28,
+                              backgroundColor: const Color(0xFF008751),
+                              child: Text(
+                                profile.fullName.isNotEmpty
+                                    ? profile.fullName.substring(0, 1)
+                                    : 'P',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        UserProfileScreen(profile: profile),
+                                  ),
+                                );
+                              },
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        profile.fullName,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: Color(0xFF00331A),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      const Icon(
+                                        Icons.verified,
+                                        color: Color(0xFF008751),
+                                        size: 16,
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    profile.profession,
+                                    style: const TextStyle(
+                                      color: Color(0xFF006633),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.star,
+                                        color: Colors.amber,
+                                        size: 14,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Text(
+                                        '4.9 (Live Pro)',
+                                        style: TextStyle(fontSize: 12),
+                                      ),
+                                      const Spacer(),
+                                      Text(
+                                        '${profile.lga}, Lagos',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Direct Chat Button for multi-device testing
+                          IconButton(
+                            icon: const Icon(
+                              Icons.chat_bubble,
+                              color: Color(0xFF008751),
+                            ),
+                            tooltip: 'Chat with Professional',
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ChatScreen(peerProfile: profile),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
                     );
                   },
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 14),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F5E9), // Greenish design box
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.green.shade200,
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.green.withValues(alpha: 0.05),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 28,
-                          backgroundColor: const Color(0xFF008751),
-                          child: Text(
-                            pro.name.substring(0, 1),
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    pro.name,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: Color(0xFF00331A),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  const Icon(
-                                    Icons.verified,
-                                    color: Color(0xFF008751),
-                                    size: 16,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                pro.profession,
-                                style: const TextStyle(
-                                  color: Color(0xFF006633),
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.star,
-                                    color: Colors.amber,
-                                    size: 14,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${pro.rating} (${pro.completedJobs} jobs)',
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                  const Spacer(),
-                                  Text(
-                                    '₦${pro.startingPrice.toStringAsFixed(0)} starting',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF008751),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 );
               },
             ),
@@ -376,7 +434,15 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         currentIndex: _bottomNavIndex,
         selectedItemColor: const Color(0xFF008751),
         unselectedItemColor: Colors.grey,
-        onTap: (val) => setState(() => _bottomNavIndex = val),
+        onTap: (val) {
+          setState(() => _bottomNavIndex = val);
+          if (val == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SearchScreen()),
+            );
+          }
+        },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),

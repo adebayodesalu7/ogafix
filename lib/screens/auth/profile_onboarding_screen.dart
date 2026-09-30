@@ -1,6 +1,8 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+
 import '../../models/user_profile_model.dart';
 import '../../services/auth_service.dart';
 import '../../utils/lagos_lgas.dart';
@@ -22,7 +24,8 @@ class ProfileOnboardingScreen extends StatefulWidget {
   });
 
   @override
-  State<ProfileOnboardingScreen> createState() => _ProfileOnboardingScreenState();
+  State<ProfileOnboardingScreen> createState() =>
+      _ProfileOnboardingScreenState();
 }
 
 class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
@@ -30,8 +33,10 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _stateOfOriginController = TextEditingController();
+  final TextEditingController _stateOfOriginController =
+      TextEditingController();
   final TextEditingController _expController = TextEditingController();
   final TextEditingController _ninController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
@@ -60,6 +65,10 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
   void initState() {
     super.initState();
     _phoneController.text = widget.phone;
+    _emailController.text =
+        (widget.email.contains('@ogafix.ng') && widget.phone.isNotEmpty)
+        ? ''
+        : widget.email;
   }
 
   Future<void> _pickProfileImage() async {
@@ -89,7 +98,11 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
             children: [
               const Text(
                 'Welcome to OgaFix Onboarding!',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF008751)),
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF008751),
+                ),
               ),
               const SizedBox(height: 6),
               const Text(
@@ -97,15 +110,24 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                 style: TextStyle(color: Colors.grey, fontSize: 13),
               ),
               const SizedBox(height: 24),
-              // Profile Image Upload
+              // Profile Avatar Placeholder
               Center(
                 child: Stack(
                   children: [
                     CircleAvatar(
                       radius: 45,
-                      backgroundColor: const Color(0xFF008751).withValues(alpha: 0.2),
-                      backgroundImage: _profileImageFile != null ? FileImage(_profileImageFile!) : null,
-                      child: _profileImageFile == null ? const Icon(Icons.person, size: 50, color: Color(0xFF008751)) : null,
+                      backgroundColor: const Color(0xFF008751)
+                          .withValues(alpha: 0.2),
+                      backgroundImage: _profileImageFile != null
+                          ? FileImage(_profileImageFile!)
+                          : null,
+                      child: _profileImageFile == null
+                          ? const Icon(
+                              Icons.person,
+                              size: 50,
+                              color: Color(0xFF008751),
+                            )
+                          : null,
                     ),
                     Positioned(
                       bottom: 0,
@@ -118,7 +140,11 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                             color: Color(0xFF008751),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 18,
+                          ),
                         ),
                       ),
                     ),
@@ -136,22 +162,36 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         labelText: 'NIN Number (11-digit)',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         filled: true,
                         fillColor: Colors.white,
-                        prefixIcon: const Icon(Icons.verified_user, color: Color(0xFF008751)),
+                        prefixIcon: const Icon(
+                          Icons.verified_user,
+                          color: Color(0xFF008751),
+                        ),
                       ),
-                      validator: (val) => val == null || val.length != 11 ? 'Enter valid 11-digit NIN' : null,
+                      validator: (val) => val == null || val.length != 11
+                          ? 'Enter valid 11-digit NIN'
+                          : null,
                     ),
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton(
                     onPressed: _isNinVerified ? null : _verifyNinApi,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _isNinVerified ? Colors.grey : const Color(0xFF008751),
+                      backgroundColor: _isNinVerified
+                          ? Colors.grey
+                          : const Color(0xFF008751),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 16,
+                        horizontal: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: Text(_isNinVerified ? 'Verified' : 'Verify NIN'),
                   ),
@@ -160,7 +200,14 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
               if (_isNinVerified)
                 const Padding(
                   padding: EdgeInsets.only(top: 4.0, bottom: 12.0),
-                  child: Text('✓ NIMC Database Verified Successfully', style: TextStyle(color: Color(0xFF008751), fontWeight: FontWeight.bold, fontSize: 12)),
+                  child: Text(
+                    '✓ NIMC Database Verified Successfully',
+                    style: TextStyle(
+                      color: Color(0xFF008751),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
               const SizedBox(height: 12),
               TextFormField(
@@ -168,54 +215,95 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                 readOnly: _isNinVerified,
                 decoration: InputDecoration(
                   labelText: 'Full Name (Auto-populated via NIN)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   filled: true,
-                  fillColor: _isNinVerified ? Colors.grey.shade100 : Colors.white,
+                  fillColor: _isNinVerified
+                      ? Colors.grey.shade100
+                      : Colors.white,
                 ),
-                validator: (val) => val == null || val.isEmpty ? 'Please enter full name' : null,
+                validator: (val) => val == null || val.isEmpty
+                    ? 'Please enter full name'
+                    : null,
               ),
               const SizedBox(height: 16),
+              // Email Field (Always collected)
+              TextFormField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: 'Email Address',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+                validator: (val) => val == null || !val.contains('@')
+                    ? 'Enter valid email address'
+                    : null,
+              ),
+              const SizedBox(height: 16),
+              // Phone Field (Always collected)
               TextFormField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
                   labelText: 'Phone Number',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   filled: true,
                   fillColor: Colors.white,
                 ),
-                validator: (val) => val == null || val.length < 10 ? 'Enter valid phone number' : null,
+                validator: (val) => val == null || val.length < 10
+                    ? 'Enter valid phone number'
+                    : null,
               ),
               const SizedBox(height: 16),
-              const Text('Lagos Local Government Area (LGA)', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Lagos Local Government Area (LGA)',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 6),
               DropdownButtonFormField<String>(
                 value: selectedLga,
                 decoration: InputDecoration(
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   filled: true,
                   fillColor: Colors.white,
                 ),
                 items: LagosData.localGovernments.map((lga) {
                   return DropdownMenuItem(value: lga, child: Text(lga));
                 }).toList(),
-                onChanged: (val) => setState(() => selectedLga = val ?? selectedLga),
+                onChanged: (val) =>
+                    setState(() => selectedLga = val ?? selectedLga),
               ),
               if (widget.role == 'professional') ...[
                 const SizedBox(height: 16),
-                const Text('Profession / Trade', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'Profession / Trade',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
                   value: selectedProfession,
                   decoration: InputDecoration(
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                   ),
                   items: professions.map((prof) {
                     return DropdownMenuItem(value: prof, child: Text(prof));
                   }).toList(),
-                  onChanged: (val) => setState(() => selectedProfession = val ?? selectedProfession),
+                  onChanged: (val) => setState(
+                    () => selectedProfession = val ?? selectedProfession,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -223,11 +311,15 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     labelText: 'Years of Experience',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                   ),
-                  validator: (val) => val == null || int.tryParse(val) == null ? 'Enter years of experience' : null,
+                  validator: (val) => val == null || int.tryParse(val) == null
+                      ? 'Enter years of experience'
+                      : null,
                 ),
               ],
               const SizedBox(height: 16),
@@ -236,11 +328,16 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                 readOnly: _isNinVerified,
                 decoration: InputDecoration(
                   labelText: 'State of Origin (Auto-populated via NIN)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   filled: true,
-                  fillColor: _isNinVerified ? Colors.grey.shade100 : Colors.white,
+                  fillColor: _isNinVerified
+                      ? Colors.grey.shade100
+                      : Colors.white,
                 ),
-                validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+                validator: (val) =>
+                    val == null || val.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -250,12 +347,16 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                 decoration: InputDecoration(
                   labelText: 'Professional Description & Experience (Bio)',
                   alignLabelWithHint: true,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   filled: true,
                   fillColor: Colors.white,
                   helperText: 'Describe your background and technologies used (max 1000 words).',
                 ),
-                validator: (val) => val == null || val.length < 20 ? 'Please provide at least 20 characters' : null,
+                validator: (val) => val == null || val.length < 20
+                    ? 'Please provide at least 20 characters'
+                    : null,
               ),
               const SizedBox(height: 32),
               ElevatedButton(
@@ -265,7 +366,7 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                     try {
                       final profile = UserProfile(
                         uid: widget.uid,
-                        email: widget.email,
+                        email: _emailController.text.trim(),
                         phone: _phoneController.text.trim(),
                         role: widget.role,
                         fullName: _fullNameController.text.trim(),
@@ -273,13 +374,19 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                         lga: selectedLga,
                         stateOfOrigin: _stateOfOriginController.text.trim(),
                         age: calculatedAge,
-                        yearsOfExperience: widget.role == 'professional' ? int.parse(_expController.text.trim()) : 0,
-                        profession: widget.role == 'professional' ? selectedProfession : 'Customer',
+                        yearsOfExperience: widget.role == 'professional'
+                            ? int.parse(_expController.text.trim())
+                            : 0,
+                        profession: widget.role == 'professional'
+                            ? selectedProfession
+                            : 'Customer',
                         ninNumber: _ninController.text.trim(),
                         description: _descController.text.trim(),
-                        profileImageUrl: _profileImageFile != null ? _profileImageFile!.path : '',
+                        profileImageUrl: _profileImageFile != null
+                            ? _profileImageFile!.path
+                            : '',
                         verificationLevel: _isNinVerified ? 3 : 1,
-                        emailVerified: widget.email.isNotEmpty,
+                        emailVerified: true,
                         phoneVerified: true,
                         ninVerified: _isNinVerified,
                       );
@@ -292,12 +399,17 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                       if (widget.role == 'customer') {
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => const CustomerHomeScreen()),
+                          MaterialPageRoute(
+                            builder: (context) => const CustomerHomeScreen(),
+                          ),
                         );
                       } else {
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => const ProfessionalDashboardScreen()),
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const ProfessionalDashboardScreen(),
+                          ),
                         );
                       }
                     } catch (e) {
@@ -312,8 +424,13 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                   backgroundColor: const Color(0xFF008751),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
@@ -330,7 +447,9 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
     final nin = _ninController.text.trim();
     if (nin.length != 11) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter an 11-digit NIN to verify.')),
+        const SnackBar(
+          content: Text('Please enter an 11-digit NIN to verify.'),
+        ),
       );
       return;
     }
@@ -347,13 +466,16 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
       });
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('NIN Verified Successfully via NIMC API! Fields auto-populated.')),
+        const SnackBar(
+          content: Text(
+            'NIN Verified Successfully via NIMC API! Fields auto-populated.',
+          ),
+        ),
       );
     } catch (e) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('NIN Verification Failed: $e')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('NIN Verification Failed: $e')));
     }
   }
 }
