@@ -14,6 +14,26 @@ class Category {
     required this.description,
     required this.specificServices,
   });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'iconName': iconName,
+      'description': description,
+      'specificServices': specificServices,
+    };
+  }
+
+  factory Category.fromMap(Map<String, dynamic> map) {
+    return Category(
+      id: map['id'] ?? '',
+      name: map['name'] ?? '',
+      iconName: map['iconName'] ?? 'handyman',
+      description: map['description'] ?? '',
+      specificServices: List<String>.from(map['specificServices'] ?? []),
+    );
+  }
 }
 
 class Professional {
@@ -159,7 +179,7 @@ class MockData {
     ),
     Category(
       id: 'c3',
-      name: 'AC & Refrigeration',
+      name: 'AC/Refrigeration',
       iconName: 'ac',
       description: 'AC servicing, gas refill, refrigerator repairs',
       specificServices: [
@@ -171,33 +191,22 @@ class MockData {
     ),
     Category(
       id: 'c4',
-      name: 'Web Designer',
-      iconName: 'web',
-      description: 'UI/UX design, WordPress websites, e-commerce stores',
+      name: 'Generator repair',
+      iconName: 'generator',
+      description: 'Generator servicing, coil rewinding, engine repairs',
       specificServices: [
-        'Business Website Design',
-        'E-Commerce Store Setup',
-        'Landing Page UI/UX',
-        'Website Maintenance',
+        'Generator Servicing',
+        'Engine Overhaul',
+        'Coil Rewinding',
+        'Starter Repair',
       ],
     ),
     Category(
       id: 'c5',
-      name: 'App Developer',
-      iconName: 'app',
-      description: 'Mobile app development for Android & iOS',
-      specificServices: [
-        'Flutter Mobile App',
-        'Android Native App',
-        'iOS App Development',
-        'API Integration & Backend',
-      ],
-    ),
-    Category(
-      id: 'c6',
-      name: 'Cleaning Services',
+      name: 'Cleaning',
       iconName: 'cleaning',
-      description: 'Deep cleaning, fumigation, laundry, and house chores',
+      description:
+          'Deep house cleaning, fumigation, laundry, and office cleaning',
       specificServices: [
         'Deep House Cleaning',
         'Fumigation & Pest Control',
@@ -206,27 +215,64 @@ class MockData {
       ],
     ),
     Category(
-      id: 'c7',
-      name: 'Tailoring & Fashion',
-      iconName: 'tailoring',
-      description: 'Custom native wear, alterations, and corporate tailoring',
+      id: 'c6',
+      name: 'Carpentry',
+      iconName: 'carpentry',
+      description:
+          'Furniture assembly, door fixing, kitchen cabinets, shelving',
       specificServices: [
-        'Native Senator Wear',
-        'Suit & Blazer Tailoring',
-        'Cloth Alterations',
-        'Bridal & Event Dresses',
+        'Furniture Assembly',
+        'Door Fixing & Hanging',
+        'Kitchen Cabinet Repair',
+        'Custom Shelving',
+      ],
+    ),
+    Category(
+      id: 'c7',
+      name: 'Painting',
+      iconName: 'painting',
+      description: 'Interior & exterior house painting, wallpaper installation',
+      specificServices: [
+        'Interior Wall Painting',
+        'Exterior Painting',
+        'Wallpaper Installation',
+        'POP Ceiling Painting',
       ],
     ),
     Category(
       id: 'c8',
-      name: 'Security & CCTV',
-      iconName: 'security',
-      description: 'CCTV camera installation, electric fencing, and intercoms',
+      name: 'Appliance repair',
+      iconName: 'appliance',
+      description: 'Washing machine, microwave, television, and cooker repairs',
       specificServices: [
-        'CCTV Camera Setup',
-        'Electric Fence Installation',
-        'Intercom & Access Control',
-        'Smart Alarm Systems',
+        'Washing Machine Repair',
+        'Microwave Repair',
+        'Gas Cooker Repair',
+        'TV Mounting & Repair',
+      ],
+    ),
+    Category(
+      id: 'c9',
+      name: 'Auto mechanics',
+      iconName: 'mechanic',
+      description: 'Car diagnostic, engine tuning, brake replacement, towing',
+      specificServices: [
+        'Computer Car Diagnostic',
+        'Brake Pad Replacement',
+        'Engine Tuning & Servicing',
+        'Emergency Towing',
+      ],
+    ),
+    Category(
+      id: 'c10',
+      name: 'Tailoring',
+      iconName: 'tailoring',
+      description: 'Custom native wear, suit tailoring, cloth alterations',
+      specificServices: [
+        'Native Senator Wear',
+        'Suit Tailoring',
+        'Cloth Alterations',
+        'Bridal & Event Dresses',
       ],
     ),
   ];

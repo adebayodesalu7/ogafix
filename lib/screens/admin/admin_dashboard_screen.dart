@@ -1,7 +1,52 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-class AdminDashboardScreen extends StatelessWidget {
+import '../../models/ogafix_models.dart';
+
+class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
+
+  @override
+  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+}
+
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  final TextEditingController _categoryNameController = TextEditingController();
+  final TextEditingController _categoryDescController = TextEditingController();
+  final TextEditingController _servicesController = TextEditingController();
+
+  Future<void> _addNewCategory() async {
+    if (_categoryNameController.text.trim().isEmpty) return;
+
+    final newCat = Category(
+      id: 'c_${DateTime.now().millisecondsSinceEpoch}',
+      name: _categoryNameController.text.trim(),
+      iconName: 'handyman',
+      description: _categoryDescController.text.trim(),
+      specificServices: _servicesController.text
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList(),
+    );
+
+    await FirebaseFirestore.instance
+        .collection('categories')
+        .doc(newCat.id)
+        .set(newCat.toMap());
+    _categoryNameController.clear();
+    _categoryDescController.clear();
+    _servicesController.clear();
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'New service category added dynamically via Admin Panel!',
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,6 +57,73 @@ class AdminDashboardScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const Text(
+              'Dynamic Service Category Configuration',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF008751),
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Add new service categories and trades instantly without app release.',
+              style: TextStyle(color: Colors.grey, fontSize: 12),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _categoryNameController,
+              decoration: InputDecoration(
+                labelText: 'Category Name (e.g. Solar Installation)',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _categoryDescController,
+              decoration: InputDecoration(
+                labelText: 'Short Description',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _servicesController,
+              decoration: InputDecoration(
+                labelText: 'Specific Services (comma separated)',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                helperText: 'e.g. Panel Setup, Battery Inverter, Maintenance',
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _addNewCategory,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF008751),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Publish New Category to App'),
+              ),
+            ),
+            const SizedBox(height: 32),
             // Metrics Overview
             Row(
               children: [
