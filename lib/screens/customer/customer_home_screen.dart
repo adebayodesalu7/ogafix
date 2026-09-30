@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:ogafix/screens/customer/map_search_screen.dart';
-import 'package:ogafix/screens/customer/post_job_screen.dart';
 
 import '../../models/ogafix_models.dart';
+import '../../models/user_profile_model.dart';
+import '../profile/user_profile_screen.dart';
+import 'map_search_screen.dart';
+import 'post_job_screen.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -78,10 +80,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFF008751).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
+                color: const Color(0xFF008751).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: const Color(0xFF008751).withOpacity(0.3),
+                  color: const Color(0xFF008751).withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
@@ -118,6 +120,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF008751),
                       foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: const Text('Post Job'),
                   ),
@@ -149,10 +154,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
+                            color: Colors.black.withValues(alpha: 0.03),
                             blurRadius: 6,
                             offset: const Offset(0, 2),
                           ),
@@ -180,7 +185,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               },
             ),
             const SizedBox(height: 24),
-            // Recommended Professionals
+            // Recommended Professionals (Greenish Design Boxes - Screenshot 3 Style)
             const Text(
               'Verified Professionals Near You',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -192,31 +197,72 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               itemCount: MockData.professionals.length,
               itemBuilder: (context, index) {
                 final pro = MockData.professionals[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(color: Colors.grey.shade200),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
+                return InkWell(
+                  onTap: () {
+                    // Open full profile detail view
+                    final userProfile = UserProfile(
+                      uid: pro.id,
+                      email:
+                          '${pro.name.toLowerCase().replaceAll(' ', '')}@ogafix.ng',
+                      phone: '+2348000000000',
+                      role: 'professional',
+                      fullName: pro.name,
+                      state: pro.state,
+                      lga: pro.lga,
+                      stateOfOrigin: 'Lagos State',
+                      age: 32,
+                      yearsOfExperience: 6,
+                      profession: pro.profession,
+                      ninNumber: '29384756102',
+                      description: 'Certified master artisan with over 6 years of professional experience handling residential and commercial repairs across Lagos State.',
+                      verificationLevel: pro.verificationLevel,
+                      emailVerified: true,
+                      phoneVerified: true,
+                      ninVerified: true,
+                    );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            UserProfileScreen(profile: userProfile),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 14),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(
+                        0xFFE8F5E9,
+                      ), // Greenish design box (Screenshot 3)
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.green.shade200,
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.green.withValues(alpha: 0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
                     child: Row(
                       children: [
                         CircleAvatar(
                           radius: 28,
-                          backgroundColor: const Color(0xFF008751)
-                              .withOpacity(0.2),
+                          backgroundColor: const Color(0xFF008751),
                           child: Text(
                             pro.name.substring(0, 1),
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF008751),
+                              color: Colors.white,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,6 +274,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
+                                      color: Color(0xFF00331A),
                                     ),
                                   ),
                                   const SizedBox(width: 6),
@@ -242,11 +289,12 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                               Text(
                                 pro.profession,
                                 style: const TextStyle(
-                                  color: Colors.grey,
+                                  color: Color(0xFF006633),
                                   fontSize: 13,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 8),
                               Row(
                                 children: [
                                   const Icon(
@@ -259,11 +307,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                                     '${pro.rating} (${pro.completedJobs} jobs)',
                                     style: const TextStyle(fontSize: 12),
                                   ),
-                                  const SizedBox(width: 12),
+                                  const Spacer(),
                                   Text(
                                     '₦${pro.startingPrice.toStringAsFixed(0)} starting',
                                     style: const TextStyle(
-                                      fontSize: 12,
+                                      fontSize: 13,
                                       fontWeight: FontWeight.bold,
                                       color: Color(0xFF008751),
                                     ),
