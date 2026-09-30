@@ -130,7 +130,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               ),
               const PopupMenuItem(
                 value: 'support',
-                child: Text('OgaFix Support'),
+                child: Text('FindAPro Support'),
               ),
             ],
           ),

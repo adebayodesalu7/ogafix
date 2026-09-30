@@ -93,7 +93,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               ),
                               SizedBox(width: 8),
                               Text(
-                                'OgaFix',
+                                'FindAPro',
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -414,7 +414,7 @@ class _SignupScreenState extends State<SignupScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'You already have an OgaFix account! Redirecting to Welcome Back (Login).',
+              'You already have an FindAPro account! Redirecting to Welcome Back (Login).',
             ),
           ),
         );

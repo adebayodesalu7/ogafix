@@ -54,7 +54,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
             Text(
               _otpSent
                   ? 'Enter code sent to +234 ${_phoneController.text}'
-                  : 'Realtime Firebase Authentication for OgaFix Marketplace',
+                  : 'Realtime Firebase Authentication for FindAPro Marketplace',
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.grey, fontSize: 13),
             ),

@@ -91,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               SizedBox(width: 8),
                               Text(
-                                'OgaFix',
+                                'FindAPro',
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -375,7 +375,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
-                'Welcome Onboard to OgaFix! Please complete your profile.',
+                'Welcome Onboard to FindAPro! Please complete your profile.',
               ),
             ),
           );

@@ -34,8 +34,8 @@ class _AuthScreenState extends State<AuthScreen> {
       appBar: AppBar(
         title: Text(
           _isSignUp
-              ? 'OgaFix Signup (${widget.role})'
-              : 'OgaFix Sign In (${widget.role})',
+              ? 'FindAPro Signup (${widget.role})'
+              : 'FindAPro Sign In (${widget.role})',
         ),
         backgroundColor: Colors.white,
         elevation: 0,
@@ -104,7 +104,9 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  _isSignUp ? 'Create Your Account' : 'Welcome Back to OgaFix',
+                  _isSignUp
+                      ? 'Create Your Account'
+                      : 'Welcome Back to FindAPro',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 24,
@@ -192,14 +194,13 @@ class _AuthScreenState extends State<AuthScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child:
-                      _isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : Text(
-                              _otpSent
-                                  ? 'Verify OTP & Continue'
-                                  : (_isSignUp ? 'Continue Signup' : 'Sign In'),
-                            ),
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : Text(
+                          _otpSent
+                              ? 'Verify OTP & Continue'
+                              : (_isSignUp ? 'Continue Signup' : 'Sign In'),
+                        ),
                 ),
                 const SizedBox(height: 16),
                 TextButton(
@@ -236,10 +237,9 @@ class _AuthScreenState extends State<AuthScreen> {
       if (_isPhoneInput) {
         // Phone Authentication flow
         if (!_otpSent) {
-          final formattedPhone =
-              identifier.startsWith('+')
-                  ? identifier
-                  : '+234${identifier.startsWith('0') ? identifier.substring(1) : identifier}';
+          final formattedPhone = identifier.startsWith('+')
+              ? identifier
+              : '+234${identifier.startsWith('0') ? identifier.substring(1) : identifier}';
 
           // Check if phone already used
           final existing = await _authService.checkExistingUser(
@@ -274,9 +274,9 @@ class _AuthScreenState extends State<AuthScreen> {
             },
             onError: (err) {
               setState(() => _isLoading = false);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Phone Auth Error: $err')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('Phone Auth Error: $err')));
             },
           );
         } else {
@@ -294,13 +294,12 @@ class _AuthScreenState extends State<AuthScreen> {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder:
-                      (context) => ProfileOnboardingScreen(
-                        uid: userCred!.user!.uid,
-                        email: '',
-                        phone: identifier,
-                        role: widget.role,
-                      ),
+                  builder: (context) => ProfileOnboardingScreen(
+                    uid: userCred!.user!.uid,
+                    email: '',
+                    phone: identifier,
+                    role: widget.role,
+                  ),
                 ),
               );
             } else {
@@ -349,13 +348,12 @@ class _AuthScreenState extends State<AuthScreen> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder:
-                  (context) => ProfileOnboardingScreen(
-                    uid: userCred.user!.uid,
-                    email: identifier,
-                    phone: '',
-                    role: widget.role,
-                  ),
+              builder: (context) => ProfileOnboardingScreen(
+                uid: userCred.user!.uid,
+                email: identifier,
+                phone: '',
+                role: widget.role,
+              ),
             ),
           );
         } else {
@@ -370,9 +368,8 @@ class _AuthScreenState extends State<AuthScreen> {
       }
     } catch (e) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Authentication error: $e')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Authentication error: $e')));
     }
   }
 

@@ -96,7 +96,7 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Welcome to OgaFix Onboarding!',
+                'Welcome to FindAPro Onboarding!',
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -105,7 +105,7 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
               ),
               const SizedBox(height: 6),
               const Text(
-                'Please fill in your profile details to start connecting on OgaFix.',
+                'Please fill in your profile details to start connecting on FindAPro.',
                 style: TextStyle(color: Colors.grey, fontSize: 13),
               ),
               const SizedBox(height: 24),

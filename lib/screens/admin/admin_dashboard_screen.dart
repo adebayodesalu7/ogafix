@@ -6,7 +6,7 @@ class AdminDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('OgaFix Admin Dashboard')),
+      appBar: AppBar(title: const Text('FindAPro Admin Dashboard')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(

@@ -264,7 +264,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 Text(
                   isProfessional
                       ? currentProfile.profession
-                      : 'OgaFix Valued Customer',
+                      : 'FindAPro Valued Customer',
                   style: const TextStyle(
                     fontSize: 16,
                     color: Color(0xFF008751),

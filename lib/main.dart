@@ -16,7 +16,7 @@ class OgaFixApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'OgaFix - Find Someone Who Can',
+      title: 'FindAPro - Find Someone Who Can',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,

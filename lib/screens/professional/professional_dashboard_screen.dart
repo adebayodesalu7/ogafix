@@ -29,7 +29,7 @@ class _ProfessionalDashboardScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('OgaFix Professional Hub'),
+        title: const Text('FindAPro Professional Hub'),
         actions: [
           IconButton(
             icon: const Icon(Icons.verified, color: Color(0xFF008751)),
@@ -85,7 +85,7 @@ class _ProfessionalDashboardScreenState
               ),
               const PopupMenuItem(
                 value: 'support',
-                child: Text('OgaFix Pro Support'),
+                child: Text('FindAPro Pro Support'),
               ),
             ],
           ),
