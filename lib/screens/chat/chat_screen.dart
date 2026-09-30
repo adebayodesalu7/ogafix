@@ -140,19 +140,36 @@ class _ChatScreenState extends State<ChatScreen> {
           },
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: Colors.white,
-                child: Text(
-                  widget.peerProfile.fullName.isNotEmpty
-                      ? widget.peerProfile.fullName.substring(0, 1)
-                      : 'U',
-                  style: const TextStyle(
-                    color: Color(0xFF008751),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              (() {
+                ImageProvider? peerAvatar;
+                if (widget.peerProfile.profileImageUrl.startsWith(
+                  'data:image',
+                )) {
+                  try {
+                    peerAvatar = MemoryImage(
+                      base64Decode(
+                        widget.peerProfile.profileImageUrl.split(',').last,
+                      ),
+                    );
+                  } catch (_) {}
+                }
+                return CircleAvatar(
+                  radius: 18,
+                  backgroundColor: Colors.white,
+                  backgroundImage: peerAvatar,
+                  child: peerAvatar == null
+                      ? Text(
+                          widget.peerProfile.fullName.isNotEmpty
+                              ? widget.peerProfile.fullName.substring(0, 1)
+                              : 'U',
+                          style: const TextStyle(
+                            color: Color(0xFF008751),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      : null,
+                );
+              })(),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
