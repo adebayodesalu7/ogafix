@@ -128,71 +128,84 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF008751),
         foregroundColor: Colors.white,
-        title: InkWell(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    UserProfileScreen(profile: widget.peerProfile),
+        title: StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(widget.peerProfile.uid)
+              .snapshots(),
+          builder: (context, snapshot) {
+            UserProfile peer = widget.peerProfile;
+            if (snapshot.hasData &&
+                snapshot.data!.exists &&
+                snapshot.data!.data() != null) {
+              peer = UserProfile.fromMap(
+                snapshot.data!.data() as Map<String, dynamic>,
+              );
+            }
+
+            ImageProvider? peerAvatar;
+            if (peer.profileImageUrl.startsWith('data:image')) {
+              try {
+                peerAvatar = MemoryImage(
+                  base64Decode(peer.profileImageUrl.split(',').last),
+                );
+              } catch (_) {}
+            }
+
+            return InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UserProfileScreen(profile: peer),
+                  ),
+                );
+              },
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundColor: Colors.white,
+                    backgroundImage: peerAvatar,
+                    child: peerAvatar == null
+                        ? Text(
+                            peer.fullName.isNotEmpty
+                                ? peer.fullName.substring(0, 1)
+                                : 'U',
+                            style: const TextStyle(
+                              color: Color(0xFF008751),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          peer.fullName,
+                          style: const TextStyle(fontSize: 16),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          peer.profession.isNotEmpty
+                              ? peer.profession
+                              : 'Verified Service Provider',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.white70,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             );
           },
-          child: Row(
-            children: [
-              (() {
-                ImageProvider? peerAvatar;
-                if (widget.peerProfile.profileImageUrl.startsWith(
-                  'data:image',
-                )) {
-                  try {
-                    peerAvatar = MemoryImage(
-                      base64Decode(
-                        widget.peerProfile.profileImageUrl.split(',').last,
-                      ),
-                    );
-                  } catch (_) {}
-                }
-                return CircleAvatar(
-                  radius: 18,
-                  backgroundColor: Colors.white,
-                  backgroundImage: peerAvatar,
-                  child: peerAvatar == null
-                      ? Text(
-                          widget.peerProfile.fullName.isNotEmpty
-                              ? widget.peerProfile.fullName.substring(0, 1)
-                              : 'U',
-                          style: const TextStyle(
-                            color: Color(0xFF008751),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        )
-                      : null,
-                );
-              })(),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.peerProfile.fullName,
-                      style: const TextStyle(fontSize: 16),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      widget.peerProfile.profession,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Colors.white70,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
         ),
         actions: [
           IconButton(

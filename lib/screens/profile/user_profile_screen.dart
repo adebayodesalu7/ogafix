@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../main.dart';
 import '../../models/user_profile_model.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
@@ -197,9 +198,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         return Scaffold(
           backgroundColor: const Color(0xFFF8F9FA),
           appBar: AppBar(
-            title: Text(
-              '${currentProfile.fullName} (${isProfessional ? 'Professional Profile' : 'Customer Profile'})',
-            ),
+            title: Text(currentProfile.fullName),
             backgroundColor: const Color(0xFF008751),
             foregroundColor: Colors.white,
           ),
@@ -559,8 +558,37 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     ),
                   ),
                 ],
+                // Dark Theme Toggle (Only on own profile)
                 if (isMyProfile) ...[
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 20),
+                  Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    child: SwitchListTile(
+                      title: const Text(
+                        'Dark Theme Mode',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: const Text(
+                        'Toggle between light and dark appearance',
+                      ),
+                      secondary: const Icon(
+                        Icons.dark_mode,
+                        color: Color(0xFF008751),
+                      ),
+                      value: themeModeNotifier.value == ThemeMode.dark,
+                      onChanged: (val) {
+                        themeModeNotifier.value = val
+                            ? ThemeMode.dark
+                            : ThemeMode.light;
+                        setState(() {});
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
