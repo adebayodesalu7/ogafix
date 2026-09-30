@@ -5,12 +5,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../main.dart';
 import '../../models/user_profile_model.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
+import '../chat/chats_list_screen.dart';
+import '../customer/customer_home_screen.dart';
+import '../customer/map_search_screen.dart';
+import '../customer/search_screen.dart';
+import '../professional/professional_dashboard_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final UserProfile profile;
@@ -24,11 +28,11 @@ class UserProfileScreen extends StatefulWidget {
 class _UserProfileScreenState extends State<UserProfileScreen> {
   final AuthService _authService = AuthService();
   bool _isUploading = false;
+  int _bottomNavIndex = 4; // Profile tab selected
 
   Future<void> _pickAndChangeImage(UserProfile currentProfile) async {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    if (currentUserId != currentProfile.uid)
-      return; // Security: only owner can edit
+    if (currentUserId != currentProfile.uid) return;
 
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -64,99 +68,49 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
-  void _showFullScreenImage(UserProfile currentProfile) {
-    ImageProvider? fullImg;
-    if (currentProfile.profileImageUrl.startsWith('data:image')) {
-      try {
-        fullImg = MemoryImage(
-          base64Decode(currentProfile.profileImageUrl.split(',').last),
-        );
-      } catch (_) {}
-    } else if (currentProfile.profileImageUrl.startsWith('http')) {
-      fullImg = NetworkImage(currentProfile.profileImageUrl);
-    } else if (currentProfile.profileImageUrl.isNotEmpty &&
-        File(currentProfile.profileImageUrl).existsSync()) {
-      fullImg = FileImage(File(currentProfile.profileImageUrl));
-    }
-
+  void _showPreferencesDialog(UserProfile currentProfile) {
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.black,
-        insetPadding: EdgeInsets.zero,
-        child: Stack(
-          alignment: Alignment.center,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text('Preferences', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            InteractiveViewer(
-              child: fullImg != null
-                  ? Image(image: fullImg)
-                  : const CircleAvatar(
-                      radius: 80,
-                      child: Icon(Icons.person, size: 80),
-                    ),
-            ),
-            Positioned(
-              top: 40,
-              right: 20,
-              child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white, size: 30),
-                onPressed: () => Navigator.pop(context),
+            SwitchListTile(
+              title: const Text(
+                'Dark Theme Mode',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
+              subtitle: const Text(
+                'Toggle between light and dark appearance',
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+              secondary: const Icon(Icons.dark_mode, color: Color(0xFF008751)),
+              value: themeModeNotifier.value == ThemeMode.dark,
+              onChanged: (val) {
+                themeModeNotifier.value = val
+                    ? ThemeMode.dark
+                    : ThemeMode.light;
+                setState(() {});
+              },
             ),
           ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Close',
+              style: TextStyle(color: Color(0xFF008751)),
+            ),
+          ),
+        ],
       ),
     );
-  }
-
-  Future<void> _launchPhoneDialer(String phoneNumber) async {
-    final Uri phoneUri = Uri(scheme: 'tel', path: phoneNumber);
-    if (await canLaunchUrl(phoneUri)) {
-      await launchUrl(phoneUri);
-    }
-  }
-
-  Future<void> _addStatus(UserProfile currentProfile, bool isVideo) async {
-    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    if (currentUserId != currentProfile.uid) return;
-
-    final picker = ImagePicker();
-    final picked = isVideo
-        ? await picker.pickVideo(source: ImageSource.gallery)
-        : await picker.pickImage(source: ImageSource.gallery);
-
-    if (picked != null) {
-      final bytes = await File(picked.path).readAsBytes();
-      final base64Media =
-          'data:${isVideo ? 'video/mp4' : 'image/jpeg'};base64,${base64Encode(bytes)}';
-      final prefix = isVideo ? 'video:' : 'image:';
-      final statusEntry = '$prefix$base64Media';
-      final updatedStatuses = List<String>.from(currentProfile.jobStatuses)
-        ..add(statusEntry);
-
-      final updatedProfile = UserProfile(
-        uid: currentProfile.uid,
-        email: currentProfile.email,
-        phone: currentProfile.phone,
-        role: currentProfile.role,
-        fullName: currentProfile.fullName,
-        state: currentProfile.state,
-        lga: currentProfile.lga,
-        stateOfOrigin: currentProfile.stateOfOrigin,
-        yearsOfExperience: currentProfile.yearsOfExperience,
-        profession: currentProfile.profession,
-        ninNumber: currentProfile.ninNumber,
-        description: currentProfile.description,
-        profileImageUrl: currentProfile.profileImageUrl,
-        jobStatuses: updatedStatuses,
-        verificationLevel: currentProfile.verificationLevel,
-        emailVerified: currentProfile.emailVerified,
-        phoneVerified: currentProfile.phoneVerified,
-        ninVerified: currentProfile.ninVerified,
-      );
-
-      await _authService.saveCompleteUserProfile(updatedProfile);
-    }
   }
 
   @override
@@ -179,7 +133,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         }
 
         final bool isMyProfile = currentUserId == currentProfile.uid;
-        final bool isProfessional = currentProfile.role == 'professional';
 
         ImageProvider? avatarBg;
         if (currentProfile.profileImageUrl.startsWith('data:image')) {
@@ -196,455 +149,289 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         }
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF8F9FA),
-          appBar: AppBar(
-            title: Text(currentProfile.fullName),
-            backgroundColor: const Color(0xFF008751),
-            foregroundColor: Colors.white,
-          ),
+          backgroundColor: const Color(0xFF121212),
           body: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Stack(
-                  children: [
-                    InkWell(
-                      onTap: () => _showFullScreenImage(currentProfile),
-                      child: CircleAvatar(
-                        radius: 55,
-                        backgroundColor: const Color(0xFF008751)
-                            .withValues(alpha: 0.2),
-                        backgroundImage: avatarBg,
-                        child: avatarBg == null
-                            ? const Icon(
-                                Icons.person,
-                                size: 55,
-                                color: Color(0xFF008751),
-                              )
-                            : (_isUploading
-                                  ? const CircularProgressIndicator(
+                // Top Dark Green Header matching Screenshot 5
+                Container(
+                  padding: const EdgeInsets.fromLTRB(20, 50, 20, 24),
+                  decoration: const BoxDecoration(color: Color(0xFF00331A)),
+                  child: Row(
+                    children: [
+                      Stack(
+                        children: [
+                          CircleAvatar(
+                            radius: 32,
+                            backgroundColor: const Color(0xFF008751),
+                            backgroundImage: avatarBg,
+                            child: avatarBg == null
+                                ? Text(
+                                    currentProfile.fullName.isNotEmpty
+                                        ? currentProfile.fullName.substring(
+                                            0,
+                                            1,
+                                          )
+                                        : 'A',
+                                    style: const TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
                                       color: Colors.white,
-                                    )
-                                  : null),
-                      ),
-                    ),
-                    if (isMyProfile)
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: InkWell(
-                          onTap: () => _pickAndChangeImage(currentProfile),
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF008751),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.camera_alt,
-                              color: Colors.white,
-                              size: 16,
-                            ),
+                                    ),
+                                  )
+                                : null,
                           ),
+                          if (isMyProfile)
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: InkWell(
+                                onTap: () =>
+                                    _pickAndChangeImage(currentProfile),
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF008751),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.camera_alt,
+                                    color: Colors.white,
+                                    size: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          currentProfile.fullName,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                  ],
+                      IconButton(
+                        icon: const Icon(
+                          Icons.notifications_none,
+                          color: Colors.white,
+                        ),
+                        onPressed: () {},
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  currentProfile.fullName,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  isProfessional
-                      ? currentProfile.profession
-                      : 'FindAPro Valued Customer',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF008751),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                _buildMenuTile(Icons.bookmark_border, 'My interests', () {}),
+                _buildMenuTile(Icons.send_outlined, 'Invite friends', () {}),
                 const SizedBox(height: 12),
-                Chip(
-                  avatar: const Icon(
-                    Icons.verified,
-                    color: Colors.white,
-                    size: 16,
+                const Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 20.0,
+                    vertical: 8.0,
                   ),
-                  label: Text(
-                    isProfessional
-                        ? 'Verification Level ${currentProfile.verificationLevel} (NIN & Phone Verified)'
-                        : 'Customer Account (Phone & Email Verified)',
-                    style: const TextStyle(color: Colors.white),
+                  child: Text(
+                    'Settings',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
                   ),
-                  backgroundColor: const Color(0xFF008751),
+                ),
+                _buildMenuTile(
+                  Icons.settings_outlined,
+                  'Preferences',
+                  () => _showPreferencesDialog(currentProfile),
+                ),
+                _buildMenuTile(Icons.person_outline, 'Account', () {}),
+                const SizedBox(height: 12),
+                const Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 20.0,
+                    vertical: 8.0,
+                  ),
+                  child: Text(
+                    'Resources',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+                _buildMenuTile(Icons.help_outline, 'Support', () {}),
+                _buildMenuTile(
+                  Icons.info_outline,
+                  'Community and legal',
+                  () {},
+                ),
+                _buildMenuTile(
+                  Icons.card_giftcard,
+                  'Become a seller',
+                  () async {
+                    // Switch role to professional
+                    final updatedProfile = UserProfile(
+                      uid: currentProfile.uid,
+                      email: currentProfile.email,
+                      phone: currentProfile.phone,
+                      role: 'professional',
+                      fullName: currentProfile.fullName,
+                      state: currentProfile.state,
+                      lga: currentProfile.lga,
+                      stateOfOrigin: currentProfile.stateOfOrigin,
+                      yearsOfExperience: currentProfile.yearsOfExperience,
+                      profession: 'Master Artisan',
+                      ninNumber: currentProfile.ninNumber,
+                      description: currentProfile.description,
+                      profileImageUrl: currentProfile.profileImageUrl,
+                      jobStatuses: currentProfile.jobStatuses,
+                      verificationLevel: currentProfile.verificationLevel,
+                      emailVerified: currentProfile.emailVerified,
+                      phoneVerified: currentProfile.phoneVerified,
+                      ninVerified: currentProfile.ninVerified,
+                    );
+                    await _authService.saveCompleteUserProfile(updatedProfile);
+                    if (!mounted) return;
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            const ProfessionalDashboardScreen(),
+                      ),
+                      (route) => false,
+                    );
+                  },
+                ),
+                if (isMyProfile) ...[
+                  const SizedBox(height: 24),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          await _authService.signOut();
+                          if (!mounted) return;
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LoginScreen(),
+                            ),
+                            (route) => false,
+                          );
+                        },
+                        icon: const Icon(Icons.logout, color: Colors.red),
+                        label: const Text(
+                          'Log Out',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.red, width: 1.5),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 24),
+                const Center(
+                  child: Text(
+                    '4.5.0',
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
                 ),
                 const SizedBox(height: 24),
-                Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(color: Colors.green.shade200),
-                  ),
-                  color: const Color(0xFFE8F5E9),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isProfessional
-                              ? 'Professional Details'
-                              : 'Customer Details',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF008751),
-                          ),
-                        ),
-                        const Divider(color: Colors.green),
-                        const SizedBox(height: 8),
-                        _buildDetailRow(
-                          'Location',
-                          '${currentProfile.lga}, ${currentProfile.state}',
-                        ),
-                        _buildDetailRow(
-                          'State of Origin',
-                          currentProfile.stateOfOrigin,
-                        ),
-                        if (isProfessional)
-                          _buildDetailRow(
-                            'Experience',
-                            '${currentProfile.yearsOfExperience} years',
-                          ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 6.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'Phone',
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              InkWell(
-                                onTap: () =>
-                                    _launchPhoneDialer(currentProfile.phone),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.phone,
-                                      size: 16,
-                                      color: Color(0xFF008751),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      currentProfile.phone,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF008751),
-                                        decoration: TextDecoration.underline,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        _buildDetailRow('Email', currentProfile.email),
-                        _buildDetailRow(
-                          'Account Type',
-                          isProfessional
-                              ? 'Professional Service Provider'
-                              : 'Customer',
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                // Professional Bio & Description ONLY for professionals
-                if (isProfessional) ...[
-                  Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Professional Bio & Description',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            currentProfile.description.isNotEmpty
-                                ? currentProfile.description
-                                : 'No professional description provided yet.',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              height: 1.5,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: BorderSide(color: Colors.green.shade200),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Expanded(
-                                child: Text(
-                                  'Finished Job Statuses & Video Stories',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF008751),
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (isMyProfile)
-                                PopupMenuButton<String>(
-                                  icon: const Icon(
-                                    Icons.add,
-                                    color: Color(0xFF008751),
-                                  ),
-                                  onSelected: (val) {
-                                    if (val == 'image') {
-                                      _addStatus(currentProfile, false);
-                                    } else if (val == 'video') {
-                                      _addStatus(currentProfile, true);
-                                    }
-                                  },
-                                  itemBuilder: (context) => [
-                                    const PopupMenuItem(
-                                      value: 'image',
-                                      child: Text('Add Image Status'),
-                                    ),
-                                    const PopupMenuItem(
-                                      value: 'video',
-                                      child: Text('Add Video Status'),
-                                    ),
-                                  ],
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          currentProfile.jobStatuses.isEmpty
-                              ? const Text(
-                                  'No finished job statuses or videos posted yet.',
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 13,
-                                  ),
-                                )
-                              : SizedBox(
-                                  height: 100,
-                                  child: ListView.builder(
-                                    scrollDirection: Axis.horizontal,
-                                    itemCount:
-                                        currentProfile.jobStatuses.length,
-                                    itemBuilder: (context, index) {
-                                      final entry =
-                                          currentProfile.jobStatuses[index];
-                                      final isVideo = entry.startsWith(
-                                        'video:',
-                                      );
-                                      final dataStr = entry.replaceFirst(
-                                        RegExp(r'^(image:|video:)'),
-                                        '',
-                                      );
-
-                                      ImageProvider? statusImg;
-                                      if (dataStr.startsWith('data:image')) {
-                                        try {
-                                          statusImg = MemoryImage(
-                                            base64Decode(
-                                              dataStr.split(',').last,
-                                            ),
-                                          );
-                                        } catch (_) {}
-                                      } else if (File(dataStr).existsSync()) {
-                                        statusImg = FileImage(File(dataStr));
-                                      }
-
-                                      return Container(
-                                        margin: const EdgeInsets.only(
-                                          right: 12,
-                                        ),
-                                        width: 90,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(
-                                            16,
-                                          ),
-                                          border: Border.all(
-                                            color: const Color(0xFF008751),
-                                            width: 2,
-                                          ),
-                                          color: Colors.black12,
-                                          image: statusImg != null
-                                              ? DecorationImage(
-                                                  image: statusImg,
-                                                  fit: BoxFit.cover,
-                                                )
-                                              : null,
-                                        ),
-                                        child: Stack(
-                                          alignment: Alignment.center,
-                                          children: [
-                                            if (isVideo)
-                                              const Icon(
-                                                Icons.play_circle_fill,
-                                                color: Colors.white,
-                                                size: 36,
-                                              ),
-                                            Align(
-                                              alignment: Alignment.bottomCenter,
-                                              child: Padding(
-                                                padding: const EdgeInsets.all(
-                                                  4.0,
-                                                ),
-                                                child: Text(
-                                                  isVideo
-                                                      ? 'Video Story'
-                                                      : 'Completed',
-                                                  style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 9,
-                                                    backgroundColor:
-                                                        Colors.black45,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-                // Dark Theme Toggle (Only on own profile)
-                if (isMyProfile) ...[
-                  const SizedBox(height: 20),
-                  Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    child: SwitchListTile(
-                      title: const Text(
-                        'Dark Theme Mode',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: const Text(
-                        'Toggle between light and dark appearance',
-                      ),
-                      secondary: const Icon(
-                        Icons.dark_mode,
-                        color: Color(0xFF008751),
-                      ),
-                      value: themeModeNotifier.value == ThemeMode.dark,
-                      onChanged: (val) {
-                        themeModeNotifier.value = val
-                            ? ThemeMode.dark
-                            : ThemeMode.light;
-                        setState(() {});
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () async {
-                        await _authService.signOut();
-                        if (!mounted) return;
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const LoginScreen(),
-                          ),
-                          (route) => false,
-                        );
-                      },
-                      icon: const Icon(Icons.logout, color: Colors.red),
-                      label: const Text(
-                        'Log Out',
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.red, width: 1.5),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
               ],
             ),
+          ),
+          bottomNavigationBar: BottomNavigationBar(
+            currentIndex: _bottomNavIndex,
+            backgroundColor: const Color(0xFF1E1E1E),
+            selectedItemColor: const Color(0xFF008751),
+            unselectedItemColor: Colors.grey,
+            type: BottomNavigationBarType.fixed,
+            onTap: (val) {
+              setState(() => _bottomNavIndex = val);
+              if (val == 0) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CustomerHomeScreen(),
+                  ),
+                );
+              } else if (val == 1) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ChatsListScreen(),
+                  ),
+                );
+              } else if (val == 2) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SearchScreen()),
+                );
+              } else if (val == 3) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MapSearchScreen(),
+                  ),
+                );
+              }
+            },
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home_outlined),
+                label: '',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.mail_outline),
+                label: '',
+              ),
+              BottomNavigationBarItem(icon: Icon(Icons.search), label: ''),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.assignment_outlined),
+                label: '',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.person_outline),
+                label: '',
+              ),
+            ],
           ),
         );
       },
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.grey,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
-        ],
+  Widget _buildMenuTile(IconData icon, String title, VoidCallback onTap) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 2),
+      leading: Icon(icon, color: const Color(0xFF008751)),
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+        ),
       ),
+      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+      onTap: onTap,
     );
   }
 }
