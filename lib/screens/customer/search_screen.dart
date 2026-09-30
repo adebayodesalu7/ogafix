@@ -1,11 +1,4 @@
-import 'dart:convert';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-
-import '../../models/user_profile_model.dart';
-import '../chat/chat_screen.dart';
-import '../profile/user_profile_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -14,242 +7,284 @@ class SearchScreen extends StatefulWidget {
   State<SearchScreen> createState() => _SearchScreenState();
 }
 
-class _SearchScreenState extends State<SearchScreen> {
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
-  String _selectedFilter = 'All';
+class _SearchScreenState extends State<SearchScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
 
-  final List<String> _filters = [
-    'All',
-    'Plumbing',
-    'Electrical',
-    'Web Designer',
-    'App Developer',
-    'AC & Refrigeration',
+  final List<Map<String, String>> _categories = [
+    {
+      'title': 'Graphics & Design',
+      'subtitle': 'Web & App Design, Art & Illustration',
+      'icon': 'brush',
+    },
+    {
+      'title': 'Programming & Tech',
+      'subtitle': 'Website Development, Website Platforms',
+      'icon': 'code',
+    },
+    {
+      'title': 'AI Services',
+      'subtitle': 'AI Mobile Development, Data',
+      'icon': 'smart_toy',
+    },
+    {
+      'title': 'Digital Marketing',
+      'subtitle': 'Search, Social',
+      'icon': 'trending_up',
+    },
+    {
+      'title': 'Video & Animation',
+      'subtitle': 'Editing & Post-Production, Social & Marketing Videos',
+      'icon': 'movie',
+    },
+    {
+      'title': 'Writing & Translation',
+      'subtitle': 'Content Writing, Editing & Critique',
+      'icon': 'edit_note',
+    },
+    {
+      'title': 'Music & Audio',
+      'subtitle': 'Music Production & Writing, Voice Over & Narration',
+      'icon': 'music_note',
+    },
+    {
+      'title': 'Business',
+      'subtitle': 'Business Formation & Consulting, Operations & Management',
+      'icon': 'business_center',
+    },
+    {
+      'title': 'Finance',
+      'subtitle': 'Accounting Services, Corporate Finance',
+      'icon': 'account_balance',
+    },
+    {
+      'title': 'Personal Growth',
+      'subtitle': 'Self Improvement, Fashion & Style',
+      'icon': 'self_improvement',
+    },
   ];
+
+  final List<Map<String, String>> _interests = [
+    {
+      'title': 'Create social media content',
+      'subtitle': 'Create authentic UGC videos, Social Media Copywriting',
+    },
+    {
+      'title': 'Develop a brand identity',
+      'subtitle': 'Logo Design, Business Cards & Stationery',
+    },
+    {
+      'title': 'Edit photos and images',
+      'subtitle': 'Product Image Editing, Photo Manipulation',
+    },
+    {
+      'title': 'Create print-ready designs',
+      'subtitle': 'T-Shirts & Merchandise, Illustration',
+    },
+    {
+      'title': 'Get professional photos taken',
+      'subtitle': 'Product Photographers, Lifestyle & Fashion Photographers',
+    },
+    {'title': 'Improve gaming skills', 'subtitle': 'Game Coaching, Gaming'},
+    {
+      'title': 'Create streaming assets',
+      'subtitle': 'Graphics for Streamers, Animation for Streamers',
+    },
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        title: const Text('Search Handymen & Services'),
-        backgroundColor: const Color(0xFF008751),
-        foregroundColor: Colors.white,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _searchController,
-              onChanged: (val) => setState(() => _searchQuery = val),
-              decoration: InputDecoration(
-                hintText:
-                    'Search plumber, web designer, app developer, Ikeja...',
-                prefixIcon: const Icon(Icons.search, color: Color(0xFF008751)),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          setState(() {
-                            _searchController.clear();
-                            _searchQuery = '';
-                          });
-                        },
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                filled: true,
-                fillColor: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 40,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: _filters.length,
-                itemBuilder: (context, index) {
-                  final filter = _filters[index];
-                  final isSelected = _selectedFilter == filter;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: ChoiceChip(
-                      label: Text(filter),
-                      selected: isSelected,
-                      selectedColor: const Color(0xFF008751),
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black87,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      onSelected: (val) =>
-                          setState(() => _selectedFilter = filter),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('professional_profiles')
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'No verified professionals registered in the database yet.',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    );
-                  }
-
-                  final firestorePros = snapshot.data!.docs.map((doc) {
-                    return UserProfile.fromMap(
-                      doc.data() as Map<String, dynamic>,
-                    );
-                  }).toList();
-
-                  final filteredPros = firestorePros.where((pro) {
-                    final matchesQuery =
-                        pro.fullName.toLowerCase().contains(
-                          _searchQuery.toLowerCase(),
-                        ) ||
-                        pro.profession.toLowerCase().contains(
-                          _searchQuery.toLowerCase(),
-                        ) ||
-                        pro.lga.toLowerCase().contains(
-                          _searchQuery.toLowerCase(),
-                        );
-                    final matchesFilter =
-                        _selectedFilter == 'All' ||
-                        pro.profession.toLowerCase().contains(
-                          _selectedFilter.toLowerCase(),
-                        );
-                    return matchesQuery && matchesFilter;
-                  }).toList();
-
-                  if (filteredPros.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'No professionals found matching your search.',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    itemCount: filteredPros.length,
-                    itemBuilder: (context, index) {
-                      final profile = filteredPros[index];
-
-                      ImageProvider? avatarImg;
-                      if (profile.profileImageUrl.startsWith('data:image')) {
-                        try {
-                          avatarImg = MemoryImage(
-                            base64Decode(
-                              profile.profileImageUrl.split(',').last,
-                            ),
-                          );
-                        } catch (_) {}
-                      }
-
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE8F5E9),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.green.shade200),
-                        ),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 26,
-                              backgroundColor: const Color(0xFF008751),
-                              backgroundImage: avatarImg,
-                              child: avatarImg == null
-                                  ? Text(
-                                      profile.fullName.isNotEmpty
-                                          ? profile.fullName.substring(0, 1)
-                                          : 'P',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    )
-                                  : null,
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: InkWell(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          UserProfileScreen(profile: profile),
-                                    ),
-                                  );
-                                },
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      profile.fullName,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    Text(
-                                      profile.profession,
-                                      style: const TextStyle(
-                                        color: Color(0xFF008751),
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '${profile.lga}, Lagos • Level ${profile.verificationLevel} Verified',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.chat_bubble,
-                                color: Color(0xFF008751),
-                              ),
-                              tooltip: 'Chat with Professional',
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        ChatScreen(peerProfile: profile),
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
+        title: const Text(
+          'Categories',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: const Color(0xFF1E1E1E),
+        iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search, color: Colors.white),
+            onPressed: () {},
+          ),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: const Color(0xFF008751),
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.grey,
+          tabs: const [
+            Tab(text: 'Categories'),
+            Tab(text: 'Interests'),
           ],
         ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          // Categories Tab
+          ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: _categories.length,
+            itemBuilder: (context, index) {
+              final cat = _categories[index];
+              return Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E1E1E),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade800),
+                      ),
+                      child: const Icon(
+                        Icons.handyman,
+                        color: Color(0xFF008751),
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            cat['title']!,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            cat['subtitle']!,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          // Interests Tab
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Your interests',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Choose your interests for a better discovery experience.',
+                  style: TextStyle(fontSize: 13, color: Colors.grey),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      'Choose Interests',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'You may also like',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _interests.length,
+                  itemBuilder: (context, index) {
+                    final item = _interests[index];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1E1E1E),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade800),
+                            ),
+                            child: const Icon(
+                              Icons.star_outline,
+                              color: Color(0xFF008751),
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item['title']!,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  item['subtitle']!,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
