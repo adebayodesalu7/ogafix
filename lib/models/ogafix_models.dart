@@ -71,6 +71,22 @@ class JobPost {
     required this.createdAt,
   });
 
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'categoryId': categoryId,
+      'specificService': specificService,
+      'description': description,
+      'state': state,
+      'lga': lga,
+      'locationStamp': locationStamp,
+      'budgetMin': budgetMin,
+      'budgetMax': budgetMax,
+      'status': status,
+      'createdAt': createdAt.toIso8601String(),
+    };
+  }
+
   factory JobPost.fromMap(Map<String, dynamic> map) {
     return JobPost(
       id: map['id'] ?? '',

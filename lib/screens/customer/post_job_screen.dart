@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/ogafix_models.dart';
@@ -234,25 +235,13 @@ class _PostJobScreenState extends State<PostJobScreen> {
             Row(
               children: [
                 OutlinedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Photo uploaded successfully!'),
-                      ),
-                    );
-                  },
+                  onPressed: () {},
                   icon: const Icon(Icons.camera_alt, color: Color(0xFF008751)),
                   label: const Text('Add Photo'),
                 ),
                 const SizedBox(width: 12),
                 OutlinedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Voice note recorded & attached!'),
-                      ),
-                    );
-                  },
+                  onPressed: () {},
                   icon: const Icon(Icons.mic, color: Color(0xFF008751)),
                   label: const Text('Voice Note'),
                 ),
@@ -308,25 +297,35 @@ class _PostJobScreenState extends State<PostJobScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   if (selectedCategory == null ||
                       selectedSpecificServices.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Please select a category and at least one specific service.',
-                        ),
-                      ),
-                    );
                     return;
                   }
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Job broadcasted for $selectedLga, Lagos! Awaiting professional quotes.',
-                      ),
-                    ),
+
+                  final budget =
+                      double.tryParse(
+                        _budgetController.text.trim().replaceAll(',', ''),
+                      ) ??
+                      10000.0;
+                  final jobPost = JobPost(
+                    id: DateTime.now().millisecondsSinceEpoch.toString(),
+                    categoryId: selectedCategory!.id,
+                    specificService: selectedSpecificServices.join(', '),
+                    description: _descController.text.trim(),
+                    state: selectedState,
+                    lga: selectedLga,
+                    locationStamp: locationStamp,
+                    budgetMin: budget,
+                    budgetMax: budget * 1.5,
+                    status: 'open',
+                    createdAt: DateTime.now(),
                   );
+
+                  await FirebaseFirestore.instance
+                      .collection('jobs')
+                      .add(jobPost.toMap());
+                  if (!mounted) return;
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
