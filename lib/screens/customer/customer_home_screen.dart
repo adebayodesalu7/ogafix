@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +23,7 @@ class CustomerHomeScreen extends StatefulWidget {
 class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   String selectedLocation = 'Lekki Phase 1, Lagos';
   int _bottomNavIndex = 0;
+  String? _selectedProfessionFilter; // null means All
 
   final List<String> lagosLocations = [
     'Lekki Phase 1, Lagos',
@@ -126,7 +129,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Search / Tell OgaFix Banner (Customer specific feature)
+            // Post Job Banner
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -143,7 +146,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'What needs fixing today?',
+                          'Need a professional?',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -152,7 +155,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Post a job, search handymen, or chat instantly.',
+                          'Pick a category below or post a job request.',
                           style: TextStyle(fontSize: 13, color: Colors.grey),
                         ),
                       ],
@@ -180,10 +183,24 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            // Categories Header
-            const Text(
-              'Service Categories & Trades',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            // Step 1: Select Category of Profession to Filter List
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Service Categories (Tap to Filter)',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                if (_selectedProfessionFilter != null)
+                  TextButton(
+                    onPressed: () =>
+                        setState(() => _selectedProfessionFilter = null),
+                    child: const Text(
+                      'Clear Filter',
+                      style: TextStyle(color: Color(0xFF008751)),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 12),
             GridView.builder(
@@ -198,57 +215,75 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               itemCount: MockData.categories.length,
               itemBuilder: (context, index) {
                 final cat = MockData.categories[index];
+                final isSelected = _selectedProfessionFilter == cat.name;
                 return InkWell(
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SearchScreen(),
-                      ),
-                    );
+                    setState(() {
+                      _selectedProfessionFilter = isSelected ? null : cat.name;
+                    });
                   },
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.03),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? const Color(0xFF008751)
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isSelected
+                            ? const Color(0xFF00331A)
+                            : Colors.transparent,
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
                         ),
-                        child: const Icon(
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
                           Icons.handyman,
-                          color: Color(0xFF008751),
+                          color: isSelected
+                              ? Colors.white
+                              : const Color(0xFF008751),
                           size: 28,
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        cat.name,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                        const SizedBox(height: 6),
+                        Text(
+                          cat.name,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isSelected ? Colors.white : Colors.black87,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 );
               },
             ),
             const SizedBox(height: 24),
-            // Verified Professionals Near You (Strictly Real Firestore Data)
-            const Text(
-              'Verified Professionals Near You',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            // Step 2: List of Professionals Filtered by Selected Profession
+            Row(
+              children: [
+                Text(
+                  _selectedProfessionFilter == null
+                      ? 'All Verified Professionals'
+                      : 'Professionals in "$_selectedProfessionFilter"',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             StreamBuilder<QuerySnapshot>(
@@ -258,7 +293,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               builder: (context, snapshot) {
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                   return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 20.0),
+                    padding: EdgeInsets.symmetric(vertical: 30.0),
                     child: Center(
                       child: Text(
                         'No verified professionals registered in the database yet.',
@@ -274,12 +309,43 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                   );
                 }).toList();
 
+                final filteredPros = firestorePros.where((pro) {
+                  if (_selectedProfessionFilter == null) return true;
+                  return pro.profession.toLowerCase().contains(
+                    _selectedProfessionFilter!.toLowerCase(),
+                  );
+                }).toList();
+
+                if (filteredPros.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 30.0),
+                    child: Center(
+                      child: Text(
+                        'No professionals found for "$_selectedProfessionFilter".',
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
                 return ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: firestorePros.length,
+                  itemCount: filteredPros.length,
                   itemBuilder: (context, index) {
-                    final profile = firestorePros[index];
+                    final profile = filteredPros[index];
+
+                    ImageProvider? avatarImg;
+                    if (profile.profileImageUrl.startsWith('data:image')) {
+                      try {
+                        avatarImg = MemoryImage(
+                          base64Decode(profile.profileImageUrl.split(',').last),
+                        );
+                      } catch (_) {}
+                    }
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 14),
@@ -314,16 +380,19 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                             child: CircleAvatar(
                               radius: 28,
                               backgroundColor: const Color(0xFF008751),
-                              child: Text(
-                                profile.fullName.isNotEmpty
-                                    ? profile.fullName.substring(0, 1)
-                                    : 'P',
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
+                              backgroundImage: avatarImg,
+                              child: avatarImg == null
+                                  ? Text(
+                                      profile.fullName.isNotEmpty
+                                          ? profile.fullName.substring(0, 1)
+                                          : 'P',
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : null,
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -400,7 +469,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          // Direct Chat Button for multi-device testing
+                          // Direct Chat Button
                           IconButton(
                             icon: const Icon(
                               Icons.chat_bubble,

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -18,20 +19,17 @@ class UserProfileScreen extends StatefulWidget {
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
   final AuthService _authService = AuthService();
-  File? _imageFile;
   bool _isUploading = false;
 
   Future<void> _pickAndChangeImage(UserProfile currentProfile) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-        _isUploading = true;
-      });
+      setState(() => _isUploading = true);
 
-      await Future.delayed(const Duration(seconds: 1));
-      
+      final bytes = await File(pickedFile.path).readAsBytes();
+      final base64Image = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+
       final updated = UserProfile(
         uid: currentProfile.uid,
         email: currentProfile.email,
@@ -46,7 +44,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         profession: currentProfile.profession,
         ninNumber: currentProfile.ninNumber,
         description: currentProfile.description,
-        profileImageUrl: pickedFile.path,
+        profileImageUrl: base64Image,
         jobStatuses: currentProfile.jobStatuses,
         verificationLevel: currentProfile.verificationLevel,
         emailVerified: currentProfile.emailVerified,
@@ -60,6 +58,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }
 
   void _showFullScreenImage(UserProfile currentProfile) {
+    ImageProvider? fullImg;
+    if (currentProfile.profileImageUrl.startsWith('data:image')) {
+      try {
+        fullImg = MemoryImage(base64Decode(currentProfile.profileImageUrl.split(',').last));
+      } catch (_) {}
+    } else if (currentProfile.profileImageUrl.startsWith('http')) {
+      fullImg = NetworkImage(currentProfile.profileImageUrl);
+    } else if (currentProfile.profileImageUrl.isNotEmpty && File(currentProfile.profileImageUrl).existsSync()) {
+      fullImg = FileImage(File(currentProfile.profileImageUrl));
+    }
+
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -69,11 +78,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           alignment: Alignment.center,
           children: [
             InteractiveViewer(
-              child: _imageFile != null
-                  ? Image.file(_imageFile!)
-                  : (currentProfile.profileImageUrl.isNotEmpty && !currentProfile.profileImageUrl.startsWith('http'))
-                      ? Image.file(File(currentProfile.profileImageUrl))
-                      : const CircleAvatar(radius: 80, child: Icon(Icons.person, size: 80)),
+              child: fullImg != null
+                  ? Image(image: fullImg)
+                  : const CircleAvatar(radius: 80, child: Icon(Icons.person, size: 80)),
             ),
             Positioned(
               top: 40,
@@ -105,8 +112,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         : await picker.pickImage(source: ImageSource.gallery);
 
     if (picked != null) {
+      final bytes = await File(picked.path).readAsBytes();
+      final base64Media = 'data:${isVideo ? 'video/mp4' : 'image/jpeg'};base64,${base64Encode(bytes)}';
       final prefix = isVideo ? 'video:' : 'image:';
-      final statusEntry = '$prefix${picked.path}';
+      final statusEntry = '$prefix$base64Media';
       final updatedStatuses = List<String>.from(currentProfile.jobStatuses)..add(statusEntry);
       
       final updatedProfile = UserProfile(
@@ -145,6 +154,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           currentProfile = UserProfile.fromMap(snapshot.data!.data() as Map<String, dynamic>);
         }
 
+        ImageProvider? avatarBg;
+        if (currentProfile.profileImageUrl.startsWith('data:image')) {
+          try {
+            avatarBg = MemoryImage(base64Decode(currentProfile.profileImageUrl.split(',').last));
+          } catch (_) {}
+        } else if (currentProfile.profileImageUrl.startsWith('http')) {
+          avatarBg = NetworkImage(currentProfile.profileImageUrl);
+        } else if (currentProfile.profileImageUrl.isNotEmpty && File(currentProfile.profileImageUrl).existsSync()) {
+          avatarBg = FileImage(File(currentProfile.profileImageUrl));
+        }
+
         return Scaffold(
           backgroundColor: const Color(0xFFF8F9FA),
           appBar: AppBar(
@@ -164,12 +184,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       child: CircleAvatar(
                         radius: 55,
                         backgroundColor: const Color(0xFF008751).withValues(alpha: 0.2),
-                        backgroundImage: _imageFile != null
-                            ? FileImage(_imageFile!)
-                            : (currentProfile.profileImageUrl.isNotEmpty && !currentProfile.profileImageUrl.startsWith('http'))
-                                ? FileImage(File(currentProfile.profileImageUrl)) as ImageProvider
-                                : null,
-                        child: (_imageFile == null && currentProfile.profileImageUrl.isEmpty)
+                        backgroundImage: avatarBg,
+                        child: avatarBg == null
                             ? const Icon(Icons.person, size: 55, color: Color(0xFF008751))
                             : (_isUploading ? const CircularProgressIndicator(color: Colors.white) : null),
                       ),
@@ -367,7 +383,18 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                   itemBuilder: (context, index) {
                                     final entry = currentProfile.jobStatuses[index];
                                     final isVideo = entry.startsWith('video:');
-                                    final path = entry.replaceFirst(RegExp(r'^(image:|video:)'), '');
+                                    final dataStr = entry.replaceFirst(RegExp(r'^(image:|video:)'), '');
+
+                                    ImageProvider? statusImg;
+                                    if (dataStr.startsWith('data:image')) {
+                                      try {
+                                        statusImg = MemoryImage(base64Decode(dataStr.split(',').last));
+                                      } catch (_) {}
+                                    } else if (dataStr.startsWith('data:video')) {
+                                      // Video thumbnail placeholder
+                                    } else if (File(dataStr).existsSync()) {
+                                      statusImg = FileImage(File(dataStr));
+                                    }
 
                                     return Container(
                                       margin: const EdgeInsets.only(right: 12),
@@ -376,9 +403,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                         borderRadius: BorderRadius.circular(16),
                                         border: Border.all(color: const Color(0xFF008751), width: 2),
                                         color: Colors.black12,
-                                        image: !isVideo && File(path).existsSync()
+                                        image: statusImg != null
                                             ? DecorationImage(
-                                                image: FileImage(File(path)),
+                                                image: statusImg,
                                                 fit: BoxFit.cover,
                                               )
                                             : null,
