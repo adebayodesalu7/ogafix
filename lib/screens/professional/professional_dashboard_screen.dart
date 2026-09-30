@@ -1,9 +1,13 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/ogafix_models.dart';
 import '../../models/user_profile_model.dart';
+import '../chat/chat_screen.dart';
+import '../chat/chats_list_screen.dart';
 import '../profile/user_profile_screen.dart';
 
 class ProfessionalDashboardScreen extends StatefulWidget {
@@ -17,6 +21,7 @@ class ProfessionalDashboardScreen extends StatefulWidget {
 class _ProfessionalDashboardScreenState
     extends State<ProfessionalDashboardScreen> {
   int _currentIndex = 0;
+  String? _selectedProfessionFilter;
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +92,10 @@ class _ProfessionalDashboardScreenState
       body: _currentIndex == 0
           ? _buildJobFeed()
           : _currentIndex == 1
+          ? const ChatsListScreen()
+          : _currentIndex == 2
+          ? _buildServiceDirectory()
+          : _currentIndex == 3
           ? _buildActiveJobs()
           : _buildEarningsView(),
       bottomNavigationBar: BottomNavigationBar(
@@ -94,14 +103,23 @@ class _ProfessionalDashboardScreenState
         selectedItemColor: const Color(0xFF008751),
         unselectedItemColor: Colors.grey,
         onTap: (val) => setState(() => _currentIndex = val),
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.work_outline),
             label: 'Job Feed',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline),
+            label: 'Inbox',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.people_outline),
+            label: 'Directory',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.calendar_month),
-            label: 'Active Jobs',
+            label: 'Active',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.account_balance_wallet),
@@ -213,6 +231,243 @@ class _ProfessionalDashboardScreenState
           },
         );
       },
+    );
+  }
+
+  Widget _buildServiceDirectory() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Service Categories (Tap to Filter)',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              if (_selectedProfessionFilter != null)
+                TextButton(
+                  onPressed: () =>
+                      setState(() => _selectedProfessionFilter = null),
+                  child: const Text(
+                    'Clear Filter',
+                    style: TextStyle(color: Color(0xFF008751)),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.85,
+            ),
+            itemCount: MockData.categories.length,
+            itemBuilder: (context, index) {
+              final cat = MockData.categories[index];
+              final isSelected = _selectedProfessionFilter == cat.name;
+              return InkWell(
+                onTap: () {
+                  setState(() {
+                    _selectedProfessionFilter = isSelected ? null : cat.name;
+                  });
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isSelected ? const Color(0xFF008751) : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isSelected
+                          ? const Color(0xFF00331A)
+                          : Colors.transparent,
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.handyman,
+                        color: isSelected
+                            ? Colors.white
+                            : const Color(0xFF008751),
+                        size: 28,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        cat.name,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: isSelected ? Colors.white : Colors.black87,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 24),
+          Text(
+            _selectedProfessionFilter == null
+                ? 'All Registered Service Men & Professionals'
+                : 'Professionals in "$_selectedProfessionFilter"',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('professional_profiles')
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 30.0),
+                  child: Center(
+                    child: Text(
+                      'No other professionals registered in the database yet.',
+                      style: TextStyle(color: Colors.grey, fontSize: 13),
+                    ),
+                  ),
+                );
+              }
+
+              final firestorePros = snapshot.data!.docs.map((doc) {
+                return UserProfile.fromMap(doc.data() as Map<String, dynamic>);
+              }).toList();
+
+              final filteredPros = firestorePros.where((pro) {
+                if (_selectedProfessionFilter == null) return true;
+                return pro.profession.toLowerCase().contains(
+                  _selectedProfessionFilter!.toLowerCase(),
+                );
+              }).toList();
+
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: filteredPros.length,
+                itemBuilder: (context, index) {
+                  final profile = filteredPros[index];
+
+                  ImageProvider? avatarImg;
+                  if (profile.profileImageUrl.startsWith('data:image')) {
+                    try {
+                      avatarImg = MemoryImage(
+                        base64Decode(profile.profileImageUrl.split(',').last),
+                      );
+                    } catch (_) {}
+                  }
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 14),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.green.shade200,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundColor: const Color(0xFF008751),
+                          backgroundImage: avatarImg,
+                          child: avatarImg == null
+                              ? Text(
+                                  profile.fullName.substring(0, 1),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                )
+                              : null,
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      UserProfileScreen(profile: profile),
+                                ),
+                              );
+                            },
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  profile.fullName,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                Text(
+                                  profile.profession,
+                                  style: const TextStyle(
+                                    color: Color(0xFF006633),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${profile.lga}, Lagos',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.chat_bubble,
+                            color: Color(0xFF008751),
+                          ),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    ChatScreen(peerProfile: profile),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 

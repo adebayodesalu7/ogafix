@@ -157,7 +157,6 @@ class _SearchScreenState extends State<SearchScreen> {
                               state: pro.state,
                               lga: pro.lga,
                               stateOfOrigin: 'Lagos State',
-                              age: 30,
                               yearsOfExperience: 5,
                               profession: pro.profession,
                               ninNumber: '12345678901',

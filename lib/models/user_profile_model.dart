@@ -7,7 +7,6 @@ class UserProfile {
   final String state;
   final String lga;
   final String stateOfOrigin;
-  final int age;
   final int yearsOfExperience;
   final String profession;
   final String ninNumber;
@@ -28,7 +27,6 @@ class UserProfile {
     required this.state,
     required this.lga,
     required this.stateOfOrigin,
-    required this.age,
     required this.yearsOfExperience,
     required this.profession,
     required this.ninNumber,
@@ -51,7 +49,6 @@ class UserProfile {
       'state': state,
       'lga': lga,
       'stateOfOrigin': stateOfOrigin,
-      'age': age,
       'yearsOfExperience': yearsOfExperience,
       'profession': profession,
       'ninNumber': ninNumber,
@@ -75,7 +72,6 @@ class UserProfile {
       state: map['state'] ?? 'Lagos State',
       lga: map['lga'] ?? '',
       stateOfOrigin: map['stateOfOrigin'] ?? '',
-      age: map['age'] ?? 18,
       yearsOfExperience: map['yearsOfExperience'] ?? 0,
       profession: map['profession'] ?? '',
       ninNumber: map['ninNumber'] ?? '',

@@ -217,7 +217,6 @@ class AuthService {
       state: profile.state,
       lga: profile.lga,
       stateOfOrigin: profile.stateOfOrigin,
-      age: profile.age,
       yearsOfExperience: profile.yearsOfExperience,
       profession: profile.profession,
       ninNumber: profile.ninNumber,

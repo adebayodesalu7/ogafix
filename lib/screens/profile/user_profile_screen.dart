@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../../models/user_profile_model.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
@@ -39,7 +41,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         state: currentProfile.state,
         lga: currentProfile.lga,
         stateOfOrigin: currentProfile.stateOfOrigin,
-        age: currentProfile.age,
         yearsOfExperience: currentProfile.yearsOfExperience,
         profession: currentProfile.profession,
         ninNumber: currentProfile.ninNumber,
@@ -61,11 +62,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     ImageProvider? fullImg;
     if (currentProfile.profileImageUrl.startsWith('data:image')) {
       try {
-        fullImg = MemoryImage(base64Decode(currentProfile.profileImageUrl.split(',').last));
+        fullImg = MemoryImage(
+          base64Decode(currentProfile.profileImageUrl.split(',').last),
+        );
       } catch (_) {}
     } else if (currentProfile.profileImageUrl.startsWith('http')) {
       fullImg = NetworkImage(currentProfile.profileImageUrl);
-    } else if (currentProfile.profileImageUrl.isNotEmpty && File(currentProfile.profileImageUrl).existsSync()) {
+    } else if (currentProfile.profileImageUrl.isNotEmpty &&
+        File(currentProfile.profileImageUrl).existsSync()) {
       fullImg = FileImage(File(currentProfile.profileImageUrl));
     }
 
@@ -80,7 +84,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             InteractiveViewer(
               child: fullImg != null
                   ? Image(image: fullImg)
-                  : const CircleAvatar(radius: 80, child: Icon(Icons.person, size: 80)),
+                  : const CircleAvatar(
+                      radius: 80,
+                      child: Icon(Icons.person, size: 80),
+                    ),
             ),
             Positioned(
               top: 40,
@@ -113,11 +120,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
     if (picked != null) {
       final bytes = await File(picked.path).readAsBytes();
-      final base64Media = 'data:${isVideo ? 'video/mp4' : 'image/jpeg'};base64,${base64Encode(bytes)}';
+      final base64Media =
+          'data:${isVideo ? 'video/mp4' : 'image/jpeg'};base64,${base64Encode(bytes)}';
       final prefix = isVideo ? 'video:' : 'image:';
       final statusEntry = '$prefix$base64Media';
-      final updatedStatuses = List<String>.from(currentProfile.jobStatuses)..add(statusEntry);
-      
+      final updatedStatuses = List<String>.from(currentProfile.jobStatuses)
+        ..add(statusEntry);
+
       final updatedProfile = UserProfile(
         uid: currentProfile.uid,
         email: currentProfile.email,
@@ -127,7 +136,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         state: currentProfile.state,
         lga: currentProfile.lga,
         stateOfOrigin: currentProfile.stateOfOrigin,
-        age: currentProfile.age,
         yearsOfExperience: currentProfile.yearsOfExperience,
         profession: currentProfile.profession,
         ninNumber: currentProfile.ninNumber,
@@ -147,21 +155,31 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance.collection('users').doc(widget.profile.uid).snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.profile.uid)
+          .snapshots(),
       builder: (context, snapshot) {
         UserProfile currentProfile = widget.profile;
-        if (snapshot.hasData && snapshot.data!.exists && snapshot.data!.data() != null) {
-          currentProfile = UserProfile.fromMap(snapshot.data!.data() as Map<String, dynamic>);
+        if (snapshot.hasData &&
+            snapshot.data!.exists &&
+            snapshot.data!.data() != null) {
+          currentProfile = UserProfile.fromMap(
+            snapshot.data!.data() as Map<String, dynamic>,
+          );
         }
 
         ImageProvider? avatarBg;
         if (currentProfile.profileImageUrl.startsWith('data:image')) {
           try {
-            avatarBg = MemoryImage(base64Decode(currentProfile.profileImageUrl.split(',').last));
+            avatarBg = MemoryImage(
+              base64Decode(currentProfile.profileImageUrl.split(',').last),
+            );
           } catch (_) {}
         } else if (currentProfile.profileImageUrl.startsWith('http')) {
           avatarBg = NetworkImage(currentProfile.profileImageUrl);
-        } else if (currentProfile.profileImageUrl.isNotEmpty && File(currentProfile.profileImageUrl).existsSync()) {
+        } else if (currentProfile.profileImageUrl.isNotEmpty &&
+            File(currentProfile.profileImageUrl).existsSync()) {
           avatarBg = FileImage(File(currentProfile.profileImageUrl));
         }
 
@@ -183,11 +201,20 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       onTap: () => _showFullScreenImage(currentProfile),
                       child: CircleAvatar(
                         radius: 55,
-                        backgroundColor: const Color(0xFF008751).withValues(alpha: 0.2),
+                        backgroundColor: const Color(0xFF008751)
+                            .withValues(alpha: 0.2),
                         backgroundImage: avatarBg,
                         child: avatarBg == null
-                            ? const Icon(Icons.person, size: 55, color: Color(0xFF008751))
-                            : (_isUploading ? const CircularProgressIndicator(color: Colors.white) : null),
+                            ? const Icon(
+                                Icons.person,
+                                size: 55,
+                                color: Color(0xFF008751),
+                              )
+                            : (_isUploading
+                                  ? const CircularProgressIndicator(
+                                      color: Colors.white,
+                                    )
+                                  : null),
                       ),
                     ),
                     Positioned(
@@ -201,7 +228,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                             color: Color(0xFF008751),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 16,
+                          ),
                         ),
                       ),
                     ),
@@ -210,7 +241,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 const SizedBox(height: 16),
                 Text(
                   currentProfile.fullName,
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -223,7 +257,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 ),
                 const SizedBox(height: 12),
                 Chip(
-                  avatar: const Icon(Icons.verified, color: Colors.white, size: 16),
+                  avatar: const Icon(
+                    Icons.verified,
+                    color: Colors.white,
+                    size: 16,
+                  ),
                   label: Text(
                     'Verification Level ${currentProfile.verificationLevel} (NIN & Phone Verified)',
                     style: const TextStyle(color: Colors.white),
@@ -257,8 +295,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           'Location',
                           '${currentProfile.lga}, ${currentProfile.state}',
                         ),
-                        _buildDetailRow('State of Origin', currentProfile.stateOfOrigin),
-                        _buildDetailRow('Age', '${currentProfile.age} years'),
+                        _buildDetailRow(
+                          'State of Origin',
+                          currentProfile.stateOfOrigin,
+                        ),
                         _buildDetailRow(
                           'Experience',
                           '${currentProfile.yearsOfExperience} years',
@@ -268,12 +308,23 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Phone', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500)),
+                              const Text(
+                                'Phone',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
                               InkWell(
-                                onTap: () => _launchPhoneDialer(currentProfile.phone),
+                                onTap: () =>
+                                    _launchPhoneDialer(currentProfile.phone),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.phone, size: 16, color: Color(0xFF008751)),
+                                    const Icon(
+                                      Icons.phone,
+                                      size: 16,
+                                      color: Color(0xFF008751),
+                                    ),
                                     const SizedBox(width: 4),
                                     Text(
                                       currentProfile.phone,
@@ -352,12 +403,19 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                             const Expanded(
                               child: Text(
                                 'Finished Job Statuses & Video Stories',
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF008751)),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF008751),
+                                ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             PopupMenuButton<String>(
-                              icon: const Icon(Icons.add, color: Color(0xFF008751)),
+                              icon: const Icon(
+                                Icons.add,
+                                color: Color(0xFF008751),
+                              ),
                               onSelected: (val) {
                                 if (val == 'image') {
                                   _addStatus(currentProfile, false);
@@ -366,31 +424,51 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                 }
                               },
                               itemBuilder: (context) => [
-                                const PopupMenuItem(value: 'image', child: Text('Add Image Status')),
-                                const PopupMenuItem(value: 'video', child: Text('Add Video Status')),
+                                const PopupMenuItem(
+                                  value: 'image',
+                                  child: Text('Add Image Status'),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'video',
+                                  child: Text('Add Video Status'),
+                                ),
                               ],
                             ),
                           ],
                         ),
                         const SizedBox(height: 12),
                         currentProfile.jobStatuses.isEmpty
-                            ? const Text('No finished job statuses or videos posted yet.', style: TextStyle(color: Colors.grey, fontSize: 13))
+                            ? const Text(
+                                'No finished job statuses or videos posted yet.',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 13,
+                                ),
+                              )
                             : SizedBox(
                                 height: 100,
                                 child: ListView.builder(
                                   scrollDirection: Axis.horizontal,
                                   itemCount: currentProfile.jobStatuses.length,
                                   itemBuilder: (context, index) {
-                                    final entry = currentProfile.jobStatuses[index];
+                                    final entry =
+                                        currentProfile.jobStatuses[index];
                                     final isVideo = entry.startsWith('video:');
-                                    final dataStr = entry.replaceFirst(RegExp(r'^(image:|video:)'), '');
+                                    final dataStr = entry.replaceFirst(
+                                      RegExp(r'^(image:|video:)'),
+                                      '',
+                                    );
 
                                     ImageProvider? statusImg;
                                     if (dataStr.startsWith('data:image')) {
                                       try {
-                                        statusImg = MemoryImage(base64Decode(dataStr.split(',').last));
+                                        statusImg = MemoryImage(
+                                          base64Decode(dataStr.split(',').last),
+                                        );
                                       } catch (_) {}
-                                    } else if (dataStr.startsWith('data:video')) {
+                                    } else if (dataStr.startsWith(
+                                      'data:video',
+                                    )) {
                                       // Video thumbnail placeholder
                                     } else if (File(dataStr).existsSync()) {
                                       statusImg = FileImage(File(dataStr));
@@ -401,7 +479,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                       width: 90,
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(color: const Color(0xFF008751), width: 2),
+                                        border: Border.all(
+                                          color: const Color(0xFF008751),
+                                          width: 2,
+                                        ),
                                         color: Colors.black12,
                                         image: statusImg != null
                                             ? DecorationImage(
@@ -414,14 +495,27 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                         alignment: Alignment.center,
                                         children: [
                                           if (isVideo)
-                                            const Icon(Icons.play_circle_fill, color: Colors.white, size: 36),
+                                            const Icon(
+                                              Icons.play_circle_fill,
+                                              color: Colors.white,
+                                              size: 36,
+                                            ),
                                           Align(
                                             alignment: Alignment.bottomCenter,
                                             child: Padding(
-                                              padding: const EdgeInsets.all(4.0),
+                                              padding: const EdgeInsets.all(
+                                                4.0,
+                                              ),
                                               child: Text(
-                                                isVideo ? 'Video Story' : 'Completed',
-                                                style: const TextStyle(color: Colors.white, fontSize: 9, backgroundColor: Colors.black45),
+                                                isVideo
+                                                    ? 'Video Story'
+                                                    : 'Completed',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 9,
+                                                  backgroundColor:
+                                                      Colors.black45,
+                                                ),
                                               ),
                                             ),
                                           ),
@@ -444,16 +538,26 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       if (!mounted) return;
                       Navigator.pushAndRemoveUntil(
                         context,
-                        MaterialPageRoute(builder: (context) => const LoginScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => const LoginScreen(),
+                        ),
                         (route) => false,
                       );
                     },
                     icon: const Icon(Icons.logout, color: Colors.red),
-                    label: const Text('Log Out', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                    label: const Text(
+                      'Log Out',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.red, width: 1.5),
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                   ),
                 ),
