@@ -250,7 +250,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 20),
                       ElevatedButton(
                         onPressed: _isLoading ? null : _handleSignup,
                         style: ElevatedButton.styleFrom(
@@ -274,7 +274,35 @@ class _SignupScreenState extends State<SignupScreen> {
                                 ),
                               ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
+                      // Google Sign Up Button
+                      OutlinedButton.icon(
+                        onPressed: _isLoading ? null : _handleGoogleSignIn,
+                        icon: const Icon(
+                          Icons.g_mobiledata,
+                          size: 28,
+                          color: Color(0xFF008751),
+                        ),
+                        label: const Text(
+                          'Sign up with Google',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1D1D1D),
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
                       Row(
                         children: [
                           const Expanded(child: Divider(color: Colors.grey)),
@@ -290,7 +318,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           const Expanded(child: Divider(color: Colors.grey)),
                         ],
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 20),
                       OutlinedButton(
                         onPressed: () {
                           Navigator.pushReplacement(
@@ -377,6 +405,33 @@ class _SignupScreenState extends State<SignupScreen> {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Signup error: $e')));
+    }
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      final userCred = await _authService.signInWithGoogle();
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (userCred?.user != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProfileOnboardingScreen(
+              uid: userCred!.user!.uid,
+              email: userCred.user!.email ?? '',
+              phone: userCred.user!.phoneNumber ?? '',
+              role: selectedRole,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Google Sign-In failed: $e')));
     }
   }
 }
