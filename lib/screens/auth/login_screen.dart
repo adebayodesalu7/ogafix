@@ -24,10 +24,10 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Top Dark Green Header with Leafy / Curved Design (Screenshot 1)
+            // Top Dark Green Header with Leafy Design and OgaFix Branding
             Container(
               width: double.infinity,
-              height: 320,
+              height: 340,
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -55,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   Positioned(
-                    top: 120,
+                    top: 130,
                     right: 90,
                     child: Icon(
                       Icons.forest,
@@ -64,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   Positioned(
-                    top: 80,
+                    top: 90,
                     left: 20,
                     child: Icon(
                       Icons.park,
@@ -76,11 +76,31 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: 28.0,
-                        vertical: 50.0,
+                        vertical: 40.0,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.handyman_rounded,
+                                color: Colors.white,
+                                size: 28,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'OgaFix',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 20),
                           Text(
                             'Welcome Back !',
                             style: TextStyle(
