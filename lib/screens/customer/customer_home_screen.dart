@@ -22,7 +22,6 @@ class CustomerHomeScreen extends StatefulWidget {
 
 class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   String selectedLocation = 'Lekki Phase 1, Lagos';
-  int _bottomNavIndex = 0;
   String? _selectedProfessionFilter; // null means All
 
   final List<String> lagosLocations = [
@@ -507,52 +506,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _bottomNavIndex,
-        selectedItemColor: const Color(0xFF008751),
-        unselectedItemColor: Colors.grey,
-        onTap: (val) async {
-          setState(() => _bottomNavIndex = val);
-          if (val == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const SearchScreen()),
-            );
-          } else if (val == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ChatsListScreen()),
-            );
-          } else if (val == 3) {
-            final user = FirebaseAuth.instance.currentUser;
-            if (user != null) {
-              final doc = await FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(user.uid)
-                  .get();
-              if (doc.exists && doc.data() != null) {
-                final profile = UserProfile.fromMap(doc.data()!);
-                if (!mounted) return;
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => UserProfileScreen(profile: profile),
-                  ),
-                );
-              }
-            }
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat),
-            label: 'Chats / Inbox',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
       ),
     );
   }

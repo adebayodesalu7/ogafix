@@ -366,7 +366,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           'Account Type',
                           isProfessional
                               ? 'Professional Service Provider'
-                              : 'Customer / Job Poster',
+                              : 'Customer',
                         ),
                       ],
                     ),
