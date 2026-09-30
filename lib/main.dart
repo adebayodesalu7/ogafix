@@ -1,7 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:ogafix/screens/admin/admin_dashboard_screen.dart';
-import 'package:ogafix/screens/auth/phone_auth_screen.dart';
+import 'package:ogafix/screens/auth/auth_screen.dart';
 import 'package:ogafix/screens/splash_screen.dart';
 
 void main() async {
@@ -81,8 +81,7 @@ class RoleSelectionScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          const PhoneAuthScreen(role: 'customer'),
+                      builder: (context) => const AuthScreen(role: 'customer'),
                     ),
                   );
                 },
@@ -105,7 +104,7 @@ class RoleSelectionScreen extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          const PhoneAuthScreen(role: 'professional'),
+                          const AuthScreen(role: 'professional'),
                     ),
                   );
                 },

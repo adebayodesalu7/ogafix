@@ -1,12 +1,40 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../models/user_profile_model.dart';
+
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Get current user
   User? get currentUser => _auth.currentUser;
+
+  // Check if Email or Phone is already registered in Firestore
+  Future<Map<String, bool>> checkExistingUser({
+    String? email,
+    String? phone,
+  }) async {
+    bool emailExists = false;
+    bool phoneExists = false;
+
+    if (email != null && email.isNotEmpty) {
+      final emailQuery = await _firestore
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .get();
+      emailExists = emailQuery.docs.isNotEmpty;
+    }
+
+    if (phone != null && phone.isNotEmpty) {
+      final phoneQuery = await _firestore
+          .collection('users')
+          .where('phone', isEqualTo: phone)
+          .get();
+      phoneExists = phoneQuery.docs.isNotEmpty;
+    }
+
+    return {'emailExists': emailExists, 'phoneExists': phoneExists};
+  }
 
   // Send Phone OTP
   Future<void> verifyPhoneNumber({
@@ -49,11 +77,33 @@ class AuthService {
     }
   }
 
-  // Save User Profile to Firestore
+  // Email & Password Signup
+  Future<UserCredential> signUpWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    return await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+  }
+
+  // Email & Password Signin
+  Future<UserCredential> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    return await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+  }
+
+  // Save basic User Profile to Firestore
   Future<void> saveUserProfile({
     required String uid,
     required String phone,
-    required String role, // 'customer' or 'professional'
+    required String role,
     required String state,
     required String lga,
     String? profession,
@@ -89,7 +139,63 @@ class AuthService {
     }, SetOptions(merge: true));
   }
 
-  // Sign out
+  // Save User Profile to Firestore with Verification Levels
+  Future<void> saveCompleteUserProfile(UserProfile profile) async {
+    int calcVerificationLevel = 1; // Phone Verified
+    if (profile.emailVerified) {
+      calcVerificationLevel = 2; // Email Verified
+    }
+    if (profile.emailVerified && profile.ninNumber.isNotEmpty) {
+      calcVerificationLevel = 3; // NIN & Skill Verified
+    }
+
+    final updatedProfile = UserProfile(
+      uid: profile.uid,
+      email: profile.email,
+      phone: profile.phone,
+      role: profile.role,
+      fullName: profile.fullName,
+      state: profile.state,
+      lga: profile.lga,
+      stateOfOrigin: profile.stateOfOrigin,
+      age: profile.age,
+      yearsOfExperience: profile.yearsOfExperience,
+      profession: profile.profession,
+      ninNumber: profile.ninNumber,
+      description: profile.description,
+      verificationLevel: calcVerificationLevel,
+      emailVerified: profile.emailVerified,
+      phoneVerified: profile.phoneVerified,
+      ninVerified: profile.ninNumber.isNotEmpty,
+    );
+
+    await _firestore
+        .collection('users')
+        .doc(profile.uid)
+        .set(updatedProfile.toMap(), SetOptions(merge: true));
+
+    if (profile.role == 'professional') {
+      await _firestore
+          .collection('professional_profiles')
+          .doc(profile.uid)
+          .set(updatedProfile.toMap(), SetOptions(merge: true));
+    } else {
+      await _firestore
+          .collection('customer_profiles')
+          .doc(profile.uid)
+          .set(updatedProfile.toMap(), SetOptions(merge: true));
+    }
+  }
+
+  // Fetch User Profile from Firestore
+  Future<UserProfile?> getUserProfile(String uid) async {
+    final doc = await _firestore.collection('users').doc(uid).get();
+    if (doc.exists && doc.data() != null) {
+      return UserProfile.fromMap(doc.data()!);
+    }
+    return null;
+  }
+
   Future<void> signOut() async {
     await _auth.signOut();
   }

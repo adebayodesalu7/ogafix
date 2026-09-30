@@ -1,0 +1,318 @@
+import 'package:flutter/material.dart';
+
+import '../../services/auth_service.dart';
+import '../customer/customer_home_screen.dart';
+import '../professional/professional_dashboard_screen.dart';
+import 'profile_onboarding_screen.dart';
+
+class AuthScreen extends StatefulWidget {
+  final String role; // 'customer' or 'professional'
+  const AuthScreen({super.key, required this.role});
+
+  @override
+  State<AuthScreen> createState() => _AuthScreenState();
+}
+
+class _AuthScreenState extends State<AuthScreen> {
+  final AuthService _authService = AuthService();
+  final TextEditingController _identifierController =
+      TextEditingController(); // Email or Phone
+  final TextEditingController _passwordController =
+      TextEditingController(); // For email login/signup
+  final TextEditingController _otpController = TextEditingController();
+
+  bool _isSignUp = true;
+  bool _isPhoneInput = false;
+  bool _otpSent = false;
+  bool _isLoading = false;
+  String? _verificationId;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          _isSignUp
+              ? 'OgaFix Signup (${widget.role})'
+              : 'OgaFix Sign In (${widget.role})',
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Icon(
+              Icons.handyman_rounded,
+              size: 64,
+              color: Color(0xFF008751),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _isSignUp ? 'Create Your Account' : 'Welcome Back to OgaFix',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Sign up or sign in using either Email or Phone Number with 2FA security.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _identifierController,
+              decoration: InputDecoration(
+                labelText: 'Email Address or Phone Number (+234...)',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                prefixIcon: const Icon(Icons.person_outline),
+              ),
+              onChanged: (val) {
+                setState(() {
+                  _isPhoneInput =
+                      double.tryParse(val.replaceAll('+', '')) != null ||
+                      val.startsWith('+') ||
+                      val.length >= 10 && !val.contains('@');
+                });
+              },
+            ),
+            const SizedBox(height: 16),
+            if (!_isPhoneInput) ...[
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  prefixIcon: const Icon(Icons.lock_outline),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+            if (_otpSent) ...[
+              TextField(
+                controller: _otpController,
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+                decoration: InputDecoration(
+                  labelText: 'Enter 6-Digit SMS OTP',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+            ElevatedButton(
+              onPressed: _isLoading ? null : _handleSubmit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF008751),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              child: _isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : Text(
+                      _otpSent
+                          ? 'Verify OTP & Continue'
+                          : (_isSignUp ? 'Continue Signup' : 'Sign In'),
+                    ),
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () => setState(() => _isSignUp = !_isSignUp),
+              child: Text(
+                _isSignUp
+                    ? 'Already have an account? Sign In'
+                    : "Don't have an account? Sign Up",
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleSubmit() async {
+    final identifier = _identifierController.text.trim();
+    if (identifier.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your email or phone number.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      if (_isPhoneInput) {
+        // Phone Authentication flow
+        if (!_otpSent) {
+          final formattedPhone = identifier.startsWith('+')
+              ? identifier
+              : '+234${identifier.startsWith('0') ? identifier.substring(1) : identifier}';
+
+          // Check if phone already used
+          final existing = await _authService.checkExistingUser(
+            phone: formattedPhone,
+          );
+          if (_isSignUp && existing['phoneExists']!) {
+            setState(() => _isLoading = false);
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'This phone number is already registered. Please sign in instead.',
+                ),
+              ),
+            );
+            return;
+          }
+
+          await _authService.verifyPhoneNumber(
+            phoneNumber: formattedPhone,
+            onCodeSent: (verId) {
+              setState(() {
+                _verificationId = verId;
+                _otpSent = true;
+                _isLoading = false;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('OTP sent successfully to your phone!'),
+                ),
+              );
+            },
+            onError: (err) {
+              setState(() => _isLoading = false);
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('Phone Auth Error: $err')));
+            },
+          );
+        } else {
+          // Verify OTP
+          final userCred = await _authService.signInWithOTP(
+            verificationId: _verificationId!,
+            smsCode: _otpController.text.trim(),
+          );
+
+          if (!mounted) return;
+          setState(() => _isLoading = false);
+
+          if (userCred?.user != null) {
+            if (_isSignUp) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProfileOnboardingScreen(
+                    uid: userCred!.user!.uid,
+                    email: '',
+                    phone: identifier,
+                    role: widget.role,
+                  ),
+                ),
+              );
+            } else {
+              _navigateHome(widget.role);
+            }
+          }
+        }
+      } else {
+        // Email Authentication flow
+        final password = _passwordController.text.trim();
+        if (password.length < 6) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Password must be at least 6 characters.'),
+            ),
+          );
+          return;
+        }
+
+        // Check if email already used
+        final existing = await _authService.checkExistingUser(
+          email: identifier,
+        );
+        if (_isSignUp && existing['emailExists']!) {
+          setState(() => _isLoading = false);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'This email address is already registered. Please sign in instead.',
+              ),
+            ),
+          );
+          return;
+        }
+
+        if (_isSignUp) {
+          final userCred = await _authService.signUpWithEmail(
+            email: identifier,
+            password: password,
+          );
+          if (!mounted) return;
+          setState(() => _isLoading = false);
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProfileOnboardingScreen(
+                uid: userCred.user!.uid,
+                email: identifier,
+                phone: '',
+                role: widget.role,
+              ),
+            ),
+          );
+        } else {
+          await _authService.signInWithEmail(
+            email: identifier,
+            password: password,
+          );
+          if (!mounted) return;
+          setState(() => _isLoading = false);
+          _navigateHome(widget.role);
+        }
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Authentication error: $e')));
+    }
+  }
+
+  void _navigateHome(String role) {
+    if (role == 'customer') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const CustomerHomeScreen()),
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const ProfessionalDashboardScreen(),
+        ),
+      );
+    }
+  }
+}
