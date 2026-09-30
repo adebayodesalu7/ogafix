@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1003474470485",
+    "project_id": "ogafix-a998d",
+    "storage_bucket": "ogafix-a998d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1003474470485:android:3a9af7c990c870c08736dc",
+        "android_client_info": {
+          "package_name": "com.ogafix.ogafix"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCPFVHHzHyqM3vnZU3XfIkIwqbh04Cqm4o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
