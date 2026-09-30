@@ -1,7 +1,10 @@
+import 'dart:convert';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-import '../../models/ogafix_models.dart';
 import '../../models/user_profile_model.dart';
+import '../chat/chat_screen.dart';
 import '../profile/user_profile_screen.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -22,55 +25,11 @@ class _SearchScreenState extends State<SearchScreen> {
     'Electrical',
     'Web Designer',
     'App Developer',
-    'AC Repair',
+    'AC & Refrigeration',
   ];
 
   @override
   Widget build(BuildContext context) {
-    // Combine mock professionals with new trades
-    final allPros = [
-      ...MockData.professionals,
-      Professional(
-        id: 'p_web',
-        name: 'Oluwaseun Adebayo',
-        profession: 'Web Designer',
-        rating: 4.9,
-        completedJobs: 84,
-        verificationLevel: 3,
-        state: 'Lagos State',
-        lga: 'Ikeja',
-        serviceArea: 'Ikeja, Lagos',
-        locationStamp: 'Stamped: Ikeja, Lagos',
-        startingPrice: 25000,
-        avatarUrl: '',
-      ),
-      Professional(
-        id: 'p_app',
-        name: 'Chidi Okoro',
-        profession: 'App Developer',
-        rating: 5.0,
-        completedJobs: 62,
-        verificationLevel: 4,
-        state: 'Lagos State',
-        lga: 'Lekki Phase 1',
-        serviceArea: 'Lekki, Lagos',
-        locationStamp: 'Stamped: Lekki, Lagos',
-        startingPrice: 50000,
-        avatarUrl: '',
-      ),
-    ];
-
-    final filteredPros = allPros.where((pro) {
-      final matchesQuery =
-          pro.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          pro.profession.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          pro.serviceArea.toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesFilter =
-          _selectedFilter == 'All' ||
-          pro.profession.toLowerCase().contains(_selectedFilter.toLowerCase());
-      return matchesQuery && matchesFilter;
-    }).toList();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Search Handymen & Services'),
@@ -134,112 +93,160 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: filteredPros.isEmpty
-                  ? const Center(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('professional_profiles')
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'No verified professionals registered in the database yet.',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    );
+                  }
+
+                  final firestorePros = snapshot.data!.docs.map((doc) {
+                    return UserProfile.fromMap(
+                      doc.data() as Map<String, dynamic>,
+                    );
+                  }).toList();
+
+                  final filteredPros = firestorePros.where((pro) {
+                    final matchesQuery =
+                        pro.fullName.toLowerCase().contains(
+                          _searchQuery.toLowerCase(),
+                        ) ||
+                        pro.profession.toLowerCase().contains(
+                          _searchQuery.toLowerCase(),
+                        ) ||
+                        pro.lga.toLowerCase().contains(
+                          _searchQuery.toLowerCase(),
+                        );
+                    final matchesFilter =
+                        _selectedFilter == 'All' ||
+                        pro.profession.toLowerCase().contains(
+                          _selectedFilter.toLowerCase(),
+                        );
+                    return matchesQuery && matchesFilter;
+                  }).toList();
+
+                  if (filteredPros.isEmpty) {
+                    return const Center(
                       child: Text(
                         'No professionals found matching your search.',
                         style: TextStyle(color: Colors.grey),
                       ),
-                    )
-                  : ListView.builder(
-                      itemCount: filteredPros.length,
-                      itemBuilder: (context, index) {
-                        final pro = filteredPros[index];
-                        return InkWell(
-                          onTap: () {
-                            final userProfile = UserProfile(
-                              uid: pro.id,
-                              email:
-                                  '${pro.name.toLowerCase().replaceAll(' ', '')}@ogafix.ng',
-                              phone: '+2348000000000',
-                              role: 'professional',
-                              fullName: pro.name,
-                              state: pro.state,
-                              lga: pro.lga,
-                              stateOfOrigin: 'Lagos State',
-                              yearsOfExperience: 5,
-                              profession: pro.profession,
-                              ninNumber: '12345678901',
-                              description:
-                                  'Verified professional specializing in ${pro.profession}.',
-                              profileImageUrl: '',
-                              jobStatuses: [],
-                              verificationLevel: pro.verificationLevel,
-                              emailVerified: true,
-                              phoneVerified: true,
-                              ninVerified: true,
-                            );
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    UserProfileScreen(profile: userProfile),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE8F5E9),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.green.shade200),
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: filteredPros.length,
+                    itemBuilder: (context, index) {
+                      final profile = filteredPros[index];
+
+                      ImageProvider? avatarImg;
+                      if (profile.profileImageUrl.startsWith('data:image')) {
+                        try {
+                          avatarImg = MemoryImage(
+                            base64Decode(
+                              profile.profileImageUrl.split(',').last,
                             ),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 26,
-                                  backgroundColor: const Color(0xFF008751),
-                                  child: Text(
-                                    pro.name.substring(0, 1),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
+                          );
+                        } catch (_) {}
+                      }
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F5E9),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.green.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 26,
+                              backgroundColor: const Color(0xFF008751),
+                              backgroundImage: avatarImg,
+                              child: avatarImg == null
+                                  ? Text(
+                                      profile.fullName.isNotEmpty
+                                          ? profile.fullName.substring(0, 1)
+                                          : 'P',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          UserProfileScreen(profile: profile),
                                     ),
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        pro.name,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                        ),
+                                  );
+                                },
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      profile.fullName,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
                                       ),
-                                      Text(
-                                        pro.profession,
-                                        style: const TextStyle(
-                                          color: Color(0xFF008751),
-                                          fontWeight: FontWeight.w500,
-                                        ),
+                                    ),
+                                    Text(
+                                      profile.profession,
+                                      style: const TextStyle(
+                                        color: Color(0xFF008751),
+                                        fontWeight: FontWeight.w500,
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '${pro.serviceArea} • ₦${pro.startingPrice.toStringAsFixed(0)} starting',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey,
-                                        ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${profile.lga}, Lagos • Level ${profile.verificationLevel} Verified',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
-                                const Icon(
-                                  Icons.arrow_forward_ios,
-                                  size: 16,
-                                  color: Color(0xFF008751),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.chat_bubble,
+                                color: Color(0xFF008751),
+                              ),
+                              tooltip: 'Chat with Professional',
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        ChatScreen(peerProfile: profile),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),
