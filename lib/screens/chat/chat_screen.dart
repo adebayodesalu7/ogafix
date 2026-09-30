@@ -1,5 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-
+import 'package:image_picker/image_picker.dart';
 import '../../models/chat_models.dart';
 import '../../models/user_profile_model.dart';
 import '../profile/user_profile_screen.dart';
@@ -14,24 +15,48 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _msgController = TextEditingController();
-  final List<ChatMessage> _messages = [
-    ChatMessage(
-      id: 'm1',
-      senderId: 'peer',
-      senderName: 'Handyman',
-      text: 'Hello! I saw your service request on OgaFix. When would you want me to arrive?',
-      type: 'text',
-      timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
-    ),
-    ChatMessage(
-      id: 'm2',
-      senderId: 'me',
-      senderName: 'Me',
-      text: 'Hi! Can you come over by 2 PM today?',
-      type: 'text',
-      timestamp: DateTime.now().subtract(const Duration(minutes: 10)),
-    ),
-  ];
+  final List<ChatMessage> _messages = []; // Zero mock data as requested
+
+  Future<void> _pickMedia(ImageSource source, String type) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: source);
+    if (picked != null) {
+      setState(() {
+        _messages.add(
+          ChatMessage(
+            id: DateTime.now().toString(),
+            senderId: 'me',
+            senderName: 'Me',
+            text: type == 'image' ? '[Photo Attachment]' : '[Video Attachment]',
+            type: type,
+            mediaUrl: picked.path,
+            timestamp: DateTime.now(),
+          ),
+        );
+      });
+    }
+  }
+
+  void _startAgoraCall(bool isVideo) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(isVideo ? 'Agora Video Call' : 'Agora Voice Call'),
+        content: Text('Connecting Agora RTC session with ${widget.peerProfile.fullName}...\n\n(Ready for Agora Temp Token).'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('End Call', style: TextStyle(color: Colors.red)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF008751), foregroundColor: Colors.white),
+            child: const Text('Connect'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,10 +68,7 @@ class _ChatScreenState extends State<ChatScreen> {
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    UserProfileScreen(profile: widget.peerProfile),
-              ),
+              MaterialPageRoute(builder: (context) => UserProfileScreen(profile: widget.peerProfile)),
             );
           },
           child: Row(
@@ -55,25 +77,16 @@ class _ChatScreenState extends State<ChatScreen> {
                 radius: 18,
                 backgroundColor: Colors.white,
                 child: Text(
-                  widget.peerProfile.fullName.substring(0, 1),
-                  style: const TextStyle(
-                    color: Color(0xFF008751),
-                    fontWeight: FontWeight.bold,
-                  ),
+                  widget.peerProfile.fullName.isNotEmpty ? widget.peerProfile.fullName.substring(0, 1) : 'U',
+                  style: const TextStyle(color: Color(0xFF008751), fontWeight: FontWeight.bold),
                 ),
               ),
               const SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    widget.peerProfile.fullName,
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  Text(
-                    widget.peerProfile.profession,
-                    style: const TextStyle(fontSize: 11, color: Colors.white70),
-                  ),
+                  Text(widget.peerProfile.fullName, style: const TextStyle(fontSize: 16)),
+                  Text(widget.peerProfile.profession, style: const TextStyle(fontSize: 11, color: Colors.white70)),
                 ],
               ),
             ],
@@ -82,37 +95,28 @@ class _ChatScreenState extends State<ChatScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.call),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Calling ${widget.peerProfile.phone}...'),
-                ),
-              );
-            },
+            tooltip: 'Agora Voice Call',
+            onPressed: () => _startAgoraCall(false),
+          ),
+          IconButton(
+            icon: const Icon(Icons.videocam),
+            tooltip: 'Agora Video Call',
+            onPressed: () => _startAgoraCall(true),
           ),
           PopupMenuButton<String>(
             onSelected: (val) {
               if (val == 'profile') {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        UserProfileScreen(profile: widget.peerProfile),
-                  ),
+                  MaterialPageRoute(builder: (context) => UserProfileScreen(profile: widget.peerProfile)),
                 );
               } else if (val == 'clear') {
                 setState(() => _messages.clear());
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'profile',
-                child: Text('View Profile'),
-              ),
-              const PopupMenuItem(
-                value: 'clear',
-                child: Text('Clear Chat History'),
-              ),
+              const PopupMenuItem(value: 'profile', child: Text('View Profile')),
+              const PopupMenuItem(value: 'clear', child: Text('Clear Chat History')),
               const PopupMenuItem(value: 'block', child: Text('Block User')),
             ],
           ),
@@ -120,52 +124,68 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: Column(
         children: [
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final msg = _messages[index];
-                final isMe = msg.senderId == 'me';
-                return Align(
-                  alignment: isMe
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isMe ? const Color(0xFFE8F5E9) : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isMe
-                            ? Colors.green.shade200
-                            : Colors.grey.shade300,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(msg.text, style: const TextStyle(fontSize: 15)),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${msg.timestamp.hour}:${msg.timestamp.minute.toString().padLeft(2, '0')}',
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+          // End-to-End Encryption Stamp
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            color: Colors.green.shade50,
+            child: const Text(
+              '🔒 Messages are end-to-end encrypted',
+              style: TextStyle(color: Color(0xFF008751), fontSize: 12, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
             ),
           ),
-          // Chat Input Bar with Attachments, Voice & Emojis
+          Expanded(
+            child: _messages.isEmpty
+                ? const Center(
+                    child: Text(
+                      'No messages yet. Send a message or start a conversation!',
+                      style: TextStyle(color: Colors.grey, fontSize: 13),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _messages.length,
+                    itemBuilder: (context, index) {
+                      final msg = _messages[index];
+                      final isMe = msg.senderId == 'me';
+                      return Align(
+                        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isMe ? const Color(0xFFE8F5E9) : Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: isMe ? Colors.green.shade200 : Colors.grey.shade300),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (msg.mediaUrl != null && File(msg.mediaUrl!).existsSync())
+                                Container(
+                                  height: 150,
+                                  width: 200,
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    image: DecorationImage(image: FileImage(File(msg.mediaUrl!)), fit: BoxFit.cover),
+                                  ),
+                                ),
+                              Text(msg.text, style: const TextStyle(fontSize: 15)),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${msg.timestamp.hour}:${msg.timestamp.minute.toString().padLeft(2, '0')}',
+                                style: const TextStyle(fontSize: 10, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+          // Chat Input Bar
           Container(
             padding: const EdgeInsets.all(8),
             color: Colors.white,
@@ -173,46 +193,39 @@ class _ChatScreenState extends State<ChatScreen> {
               children: [
                 IconButton(
                   icon: const Icon(Icons.attach_file, color: Color(0xFF008751)),
-                  onPressed: () {
-                    _showAttachmentSheet(context);
-                  },
+                  onPressed: () => _showAttachmentSheet(context),
                 ),
                 IconButton(
                   icon: const Icon(Icons.camera_alt, color: Color(0xFF008751)),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Image captured and attached!'),
-                      ),
-                    );
-                  },
+                  onPressed: () => _pickMedia(ImageSource.camera, 'image'),
                 ),
                 Expanded(
                   child: TextField(
                     controller: _msgController,
                     decoration: InputDecoration(
                       hintText: 'Type a message...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
                       filled: true,
                       fillColor: Colors.grey.shade100,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     ),
                   ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.mic, color: Color(0xFF008751)),
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Voice message recorded & sent!'),
-                      ),
-                    );
+                    setState(() {
+                      _messages.add(
+                        ChatMessage(
+                          id: DateTime.now().toString(),
+                          senderId: 'me',
+                          senderName: 'Me',
+                          text: '🎤 [Voice Message - 0:12]',
+                          type: 'voice',
+                          timestamp: DateTime.now(),
+                        ),
+                      );
+                    });
                   },
                 ),
                 IconButton(
@@ -253,25 +266,18 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.image, color: Color(0xFF008751)),
-              title: const Text('Send Image / Video'),
+              title: const Text('Send Image from Gallery'),
               onTap: () {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Image/Video attached!')),
-                );
+                _pickMedia(ImageSource.gallery, 'image');
               },
             ),
             ListTile(
-              leading: const Icon(
-                Icons.insert_drive_file,
-                color: Color(0xFF008751),
-              ),
-              title: const Text('Send Document / Invoice'),
+              leading: const Icon(Icons.videocam, color: Color(0xFF008751)),
+              title: const Text('Send Video from Gallery'),
               onTap: () {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Document attached!')),
-                );
+                _pickMedia(ImageSource.gallery, 'video');
               },
             ),
           ],

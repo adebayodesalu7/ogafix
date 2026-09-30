@@ -296,9 +296,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'Finished Job Statuses & Stories',
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF008751)),
+                            const Expanded(
+                              child: Text(
+                                'Finished Job Statuses & Stories',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF008751)),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                             TextButton.icon(
                               onPressed: () async {
@@ -310,8 +313,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                   });
                                 }
                               },
-                              icon: const Icon(Icons.add, size: 16, color: Color(0xFF008751)),
-                              label: const Text('Add Status', style: TextStyle(color: Color(0xFF008751))),
+                              icon: const Icon(Icons.add, size: 14, color: Color(0xFF008751)),
+                              label: const Text('Add', style: TextStyle(color: Color(0xFF008751), fontSize: 13)),
                             ),
                           ],
                         ),
