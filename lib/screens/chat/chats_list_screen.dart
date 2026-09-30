@@ -65,50 +65,91 @@ class ChatsListScreen extends StatelessWidget {
                 } catch (_) {}
               }
 
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(12),
-                  leading: CircleAvatar(
-                    radius: 24,
-                    backgroundColor: const Color(0xFF008751),
-                    backgroundImage: avatarImg,
-                    child: avatarImg == null
-                        ? Text(
-                            peer.fullName.isNotEmpty
-                                ? peer.fullName.substring(0, 1)
-                                : 'U',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          )
-                        : null,
-                  ),
-                  title: Text(
-                    peer.fullName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+              final chatId = currentUserId.compareTo(peer.uid) < 0
+                  ? '${currentUserId}_${peer.uid}'
+                  : '${peer.uid}_$currentUserId';
+
+              return StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('chats')
+                    .doc(chatId)
+                    .collection('messages')
+                    .where('senderId', isNotEqualTo: currentUserId)
+                    .snapshots(),
+                builder: (context, msgSnapshot) {
+                  int unreadCount = 0;
+                  if (msgSnapshot.hasData) {
+                    unreadCount = msgSnapshot.data!.docs.length;
+                  }
+
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                  ),
-                  subtitle: Text(
-                    peer.profession,
-                    style: const TextStyle(color: Color(0xFF006633)),
-                  ),
-                  trailing: const Icon(Icons.chat, color: Color(0xFF008751)),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChatScreen(peerProfile: peer),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.all(12),
+                      leading: CircleAvatar(
+                        radius: 24,
+                        backgroundColor: const Color(0xFF008751),
+                        backgroundImage: avatarImg,
+                        child: avatarImg == null
+                            ? Text(
+                                peer.fullName.isNotEmpty
+                                    ? peer.fullName.substring(0, 1)
+                                    : 'U',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              )
+                            : null,
                       ),
-                    );
-                  },
-                ),
+                      title: Text(
+                        peer.fullName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      subtitle: Text(
+                        peer.profession,
+                        style: const TextStyle(color: Color(0xFF006633)),
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (unreadCount > 0)
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Text(
+                                '$unreadCount',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.chat, color: Color(0xFF008751)),
+                        ],
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChatScreen(peerProfile: peer),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
               );
             },
           );
