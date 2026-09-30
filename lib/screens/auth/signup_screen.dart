@@ -27,10 +27,10 @@ class _SignupScreenState extends State<SignupScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Top Dark Green Leafy Header (Screenshot 2)
+            // Top Dark Green Leafy Header with OgaFix Branding
             Container(
               width: double.infinity,
-              height: 320,
+              height: 340,
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -58,7 +58,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                   Positioned(
-                    top: 120,
+                    top: 130,
                     right: 90,
                     child: Icon(
                       Icons.forest,
@@ -67,7 +67,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                   Positioned(
-                    top: 80,
+                    top: 90,
                     left: 20,
                     child: Icon(
                       Icons.park,
@@ -79,11 +79,31 @@ class _SignupScreenState extends State<SignupScreen> {
                     child: Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: 28.0,
-                        vertical: 50.0,
+                        vertical: 40.0,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.handyman_rounded,
+                                color: Colors.white,
+                                size: 28,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'OgaFix',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 20),
                           Text(
                             'Create Account',
                             style: TextStyle(
@@ -383,6 +403,28 @@ class _SignupScreenState extends State<SignupScreen> {
           : '${identifier.replaceAll('+', '')}@ogafix.ng';
       final phone = isEmail ? '' : identifier;
 
+      // Check if already registered
+      final existing = await _authService.checkExistingUser(
+        email: email,
+        phone: phone,
+      );
+      if (existing['emailExists']! || existing['phoneExists']!) {
+        setState(() => _isLoading = false);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'You already have an OgaFix account! Redirecting to Welcome Back (Login).',
+            ),
+          ),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+        return;
+      }
+
       final userCred = await _authService.signUpWithEmail(
         email: email,
         password: password,
@@ -411,16 +453,18 @@ class _SignupScreenState extends State<SignupScreen> {
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
     try {
-      final userCred = await _authService.signInWithGoogle();
+      final result = await _authService.signInWithGoogle();
       if (!mounted) return;
       setState(() => _isLoading = false);
 
-      if (userCred?.user != null) {
+      final userCred = result['userCred'];
+
+      if (userCred != null && userCred.user != null) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => ProfileOnboardingScreen(
-              uid: userCred!.user!.uid,
+              uid: userCred.user!.uid,
               email: userCred.user!.email ?? '',
               phone: userCred.user!.phoneNumber ?? '',
               role: selectedRole,

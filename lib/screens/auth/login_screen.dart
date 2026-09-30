@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../services/auth_service.dart';
 import '../customer/customer_home_screen.dart';
+import 'profile_onboarding_screen.dart';
 import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -244,7 +245,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                       ),
                       const SizedBox(height: 16),
-                      // Google Sign In Button
+                      // Google Sign In Button with Smart Onboarding Logic for Non-Members
                       OutlinedButton.icon(
                         onPressed: _isLoading ? null : _handleGoogleSignIn,
                         icon: const Icon(
@@ -361,15 +362,40 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
     try {
-      final userCred = await _authService.signInWithGoogle();
+      final result = await _authService.signInWithGoogle();
       if (!mounted) return;
       setState(() => _isLoading = false);
 
+      final userCred = result['userCred'];
+      final isNewUser = result['isNewUser'] as bool;
+
       if (userCred?.user != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const CustomerHomeScreen()),
-        );
+        if (isNewUser) {
+          // If not yet a member, welcome onboard and direct to profile onboarding
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Welcome Onboard to OgaFix! Please complete your profile.',
+              ),
+            ),
+          );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProfileOnboardingScreen(
+                uid: userCred!.user!.uid,
+                email: userCred.user!.email ?? '',
+                phone: userCred.user!.phoneNumber ?? '',
+                role: 'customer',
+              ),
+            ),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const CustomerHomeScreen()),
+          );
+        }
       }
     } catch (e) {
       setState(() => _isLoading = false);

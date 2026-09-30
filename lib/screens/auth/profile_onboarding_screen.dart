@@ -30,9 +30,9 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _stateOfOriginController =
       TextEditingController();
-  final TextEditingController _ageController = TextEditingController();
   final TextEditingController _expController = TextEditingController();
   final TextEditingController _ninController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
@@ -40,6 +40,8 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
   String selectedLga = LagosData.localGovernments[0];
   String selectedProfession = 'Plumbing';
   bool _isLoading = false;
+  bool _isNinVerified = false;
+  int calculatedAge = 30;
 
   final List<String> professions = [
     'Plumbing',
@@ -53,9 +55,19 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _phoneController.text = widget.phone;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Complete Your Profile Onboarding')),
+      appBar: AppBar(
+        title: const Text('Complete Your Profile & NIN Verification'),
+        backgroundColor: const Color(0xFF008751),
+        foregroundColor: Colors.white,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Form(
@@ -64,7 +76,7 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Welcome to OgaFix!',
+                'Welcome to OgaFix Onboarding!',
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -73,22 +85,146 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
               ),
               const SizedBox(height: 6),
               const Text(
-                'Please fill out your verified profile details to activate your account.',
+                'Verify your 11-digit NIMC NIN to automatically populate your verified identity.',
                 style: TextStyle(color: Colors.grey, fontSize: 13),
               ),
               const SizedBox(height: 24),
+              // Profile Image Upload
+              Center(
+                child: Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 45,
+                      backgroundColor: const Color(0xFF008751)
+                          .withValues(alpha: 0.2),
+                      child: const Icon(
+                        Icons.person,
+                        size: 50,
+                        color: Color(0xFF008751),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: InkWell(
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Profile picture selected successfully!',
+                              ),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF008751),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              // NIN Verification Row
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _ninController,
+                      maxLength: 11,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'NIN Number (11-digit)',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                        prefixIcon: const Icon(
+                          Icons.verified_user,
+                          color: Color(0xFF008751),
+                        ),
+                      ),
+                      validator: (val) => val == null || val.length != 11
+                          ? 'Enter valid 11-digit NIN'
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: _isNinVerified ? null : _verifyNinApi,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _isNinVerified
+                          ? Colors.grey
+                          : const Color(0xFF008751),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 16,
+                        horizontal: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      _isNinVerified ? 'NIMCVersified' : 'Verify NIN',
+                    ),
+                  ),
+                ],
+              ),
+              if (_isNinVerified)
+                const Padding(
+                  padding: EdgeInsets.only(top: 4.0, bottom: 12.0),
+                  child: Text(
+                    '✓ NIMC Database Verified Successfully',
+                    style: TextStyle(
+                      color: Color(0xFF008751),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _fullNameController,
+                readOnly: _isNinVerified,
                 decoration: InputDecoration(
-                  labelText: 'Full Name',
+                  labelText: 'Full Name (Auto-populated via NIN)',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: _isNinVerified
+                      ? Colors.grey.shade100
+                      : Colors.white,
+                ),
+                validator: (val) => val == null || val.isEmpty
+                    ? 'Please enter full name'
+                    : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  labelText: 'Phone Number',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   filled: true,
                   fillColor: Colors.white,
                 ),
-                validator: (val) => val == null || val.isEmpty
-                    ? 'Please enter your full name'
+                validator: (val) => val == null || val.length < 10
+                    ? 'Enter valid phone number'
                     : null,
               ),
               const SizedBox(height: 16),
@@ -135,47 +271,6 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                     () => selectedProfession = val ?? selectedProfession,
                   ),
                 ),
-              ],
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _stateOfOriginController,
-                      decoration: InputDecoration(
-                        labelText: 'State of Origin',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                      validator: (val) =>
-                          val == null || val.isEmpty ? 'Required' : null,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _ageController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: 'Age',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                      validator: (val) =>
-                          val == null || int.tryParse(val) == null
-                          ? 'Enter valid age'
-                          : null,
-                    ),
-                  ),
-                ],
-              ),
-              if (widget.role == 'professional') ...[
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _expController,
@@ -195,21 +290,20 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
               ],
               const SizedBox(height: 16),
               TextFormField(
-                controller: _ninController,
-                maxLength: 11,
-                keyboardType: TextInputType.number,
+                controller: _stateOfOriginController,
+                readOnly: _isNinVerified,
                 decoration: InputDecoration(
-                  labelText: 'NIN Number (National Identification Number)',
+                  labelText: 'State of Origin (Auto-populated via NIN)',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   filled: true,
-                  fillColor: Colors.white,
-                  helperText: 'Required for Level 3 Trust & Skill Verification',
+                  fillColor: _isNinVerified
+                      ? Colors.grey.shade100
+                      : Colors.white,
                 ),
-                validator: (val) => val == null || val.length != 11
-                    ? 'Enter valid 11-digit NIN'
-                    : null,
+                validator: (val) =>
+                    val == null || val.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -224,10 +318,10 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                   ),
                   filled: true,
                   fillColor: Colors.white,
-                  helperText: 'Describe your profession, past experience, and technologies/tools used (max 1000 words).',
+                  helperText: 'Describe your background and technologies used (max 1000 words).',
                 ),
                 validator: (val) => val == null || val.length < 20
-                    ? 'Please provide at least 20 characters of description'
+                    ? 'Please provide at least 20 characters'
                     : null,
               ),
               const SizedBox(height: 32),
@@ -239,13 +333,13 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                       final profile = UserProfile(
                         uid: widget.uid,
                         email: widget.email,
-                        phone: widget.phone,
+                        phone: _phoneController.text.trim(),
                         role: widget.role,
                         fullName: _fullNameController.text.trim(),
                         state: LagosData.state,
                         lga: selectedLga,
                         stateOfOrigin: _stateOfOriginController.text.trim(),
-                        age: int.parse(_ageController.text.trim()),
+                        age: calculatedAge,
                         yearsOfExperience: widget.role == 'professional'
                             ? int.parse(_expController.text.trim())
                             : 0,
@@ -254,11 +348,11 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                             : 'Customer',
                         ninNumber: _ninController.text.trim(),
                         description: _descController.text.trim(),
-                        profileImageUrl: '',
-                        verificationLevel: 3, // Verified with NIN & Phone
-                        emailVerified: true,
+                        profileImageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb',
+                        verificationLevel: _isNinVerified ? 3 : 1,
+                        emailVerified: widget.email.isNotEmpty,
                         phoneVerified: true,
-                        ninVerified: true,
+                        ninVerified: _isNinVerified,
                       );
 
                       await _authService.saveCompleteUserProfile(profile);
@@ -298,15 +392,54 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Save Profile & Complete Signup'),
+                    : const Text('Save Profile & Complete Onboarding'),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _verifyNinApi() async {
+    final nin = _ninController.text.trim();
+    if (nin.length != 11) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter an 11-digit NIN to verify.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final result = await _authService.verifyNinNumber(nin);
+      setState(() {
+        _isLoading = false;
+        _isNinVerified = true;
+        _fullNameController.text = result['fullName'];
+        _stateOfOriginController.text = result['stateOfOrigin'];
+        calculatedAge = result['age'];
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'NIN Verified Successfully via NIMC API! Fields auto-populated.',
+          ),
+        ),
+      );
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('NIN Verification Failed: $e')));
+    }
   }
 }

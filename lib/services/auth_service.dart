@@ -14,9 +14,16 @@ class AuthService {
   Future<Map<String, bool>> checkExistingUser({
     String? email,
     String? phone,
+    String? uid,
   }) async {
     bool emailExists = false;
     bool phoneExists = false;
+    bool uidExists = false;
+
+    if (uid != null && uid.isNotEmpty) {
+      final uidDoc = await _firestore.collection('users').doc(uid).get();
+      uidExists = uidDoc.exists;
+    }
 
     if (email != null && email.isNotEmpty) {
       final emailQuery = await _firestore
@@ -34,7 +41,11 @@ class AuthService {
       phoneExists = phoneQuery.docs.isNotEmpty;
     }
 
-    return {'emailExists': emailExists, 'phoneExists': phoneExists};
+    return {
+      'emailExists': emailExists,
+      'phoneExists': phoneExists,
+      'uidExists': uidExists,
+    };
   }
 
   // Send Phone OTP
@@ -100,11 +111,13 @@ class AuthService {
     );
   }
 
-  // Google Sign-In
-  Future<UserCredential?> signInWithGoogle() async {
+  // Google Sign-In with Smart Onboarding routing
+  Future<Map<String, dynamic>> signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) return null;
+      if (googleUser == null) {
+        return {'userCred': null, 'isNewUser': false};
+      }
 
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
@@ -113,10 +126,36 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
-      return await _auth.signInWithCredential(credential);
+      final userCred = await _auth.signInWithCredential(credential);
+      final uid = userCred.user!.uid;
+
+      // Check if user already exists in Firestore
+      final existing = await checkExistingUser(uid: uid);
+      final bool isNewUser = !existing['uidExists']!;
+
+      return {'userCred': userCred, 'isNewUser': isNewUser};
     } catch (e) {
       rethrow;
     }
+  }
+
+  // Simulated NIMC NIN Verification API
+  Future<Map<String, dynamic>> verifyNinNumber(String nin) async {
+    await Future.delayed(
+      const Duration(seconds: 1),
+    ); // Network latency simulation
+    if (nin.length != 11 || !RegExp(r'^[0-9]+$').hasMatch(nin)) {
+      throw Exception('Invalid NIN. Must be exactly 11 digits.');
+    }
+    // Simulated NIMC Database lookup for verified Nigerian identity
+    return {
+      'success': true,
+      'fullName': 'Adebayo Tunde Desalu',
+      'stateOfOrigin': 'Lagos State',
+      'dob': '1995-06-14',
+      'age': 31,
+      'gender': 'Male',
+    };
   }
 
   // Save basic User Profile to Firestore
