@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Category {
   final String id;
   final String name;
@@ -88,6 +90,15 @@ class JobPost {
   }
 
   factory JobPost.fromMap(Map<String, dynamic> map) {
+    DateTime parsedDate = DateTime.now();
+    if (map['createdAt'] != null) {
+      if (map['createdAt'] is Timestamp) {
+        parsedDate = (map['createdAt'] as Timestamp).toDate();
+      } else if (map['createdAt'] is String) {
+        parsedDate = DateTime.tryParse(map['createdAt']) ?? DateTime.now();
+      }
+    }
+
     return JobPost(
       id: map['id'] ?? '',
       categoryId: map['categoryId'] ?? '',
@@ -99,9 +110,7 @@ class JobPost {
       budgetMin: (map['budgetMin'] ?? 0.0).toDouble(),
       budgetMax: (map['budgetMax'] ?? 0.0).toDouble(),
       status: map['status'] ?? 'open',
-      createdAt: map['createdAt'] != null
-          ? DateTime.parse(map['createdAt'])
-          : DateTime.now(),
+      createdAt: parsedDate,
     );
   }
 }

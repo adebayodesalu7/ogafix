@@ -148,6 +148,54 @@ class ChatsListScreen extends StatelessWidget {
                           ),
                         );
                       },
+                      onLongPress: () {
+                        showModalBottomSheet(
+                          context: context,
+                          builder: (context) => Container(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ListTile(
+                                  leading: const Icon(
+                                    Icons.archive,
+                                    color: Color(0xFF008751),
+                                  ),
+                                  title: const Text('Archive Chat'),
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                                ListTile(
+                                  leading: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
+                                  title: const Text(
+                                    'Delete Chat History',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                  onTap: () async {
+                                    Navigator.pop(context);
+                                    final batch = FirebaseFirestore.instance
+                                        .batch();
+                                    final messagesSnapshot =
+                                        await FirebaseFirestore.instance
+                                            .collection('chats')
+                                            .doc(chatId)
+                                            .collection('messages')
+                                            .get();
+                                    for (var doc in messagesSnapshot.docs) {
+                                      batch.delete(doc.reference);
+                                    }
+                                    await batch.commit();
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   );
                 },
