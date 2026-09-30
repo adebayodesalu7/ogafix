@@ -6,7 +6,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../main.dart';
 import '../../models/user_profile_model.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
@@ -68,37 +67,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
-  void _showPreferencesDialog(UserProfile currentProfile) {
+  void _showPreferencesDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E1E),
         title: const Text('Preferences', style: TextStyle(color: Colors.white)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SwitchListTile(
-              title: const Text(
-                'Dark Theme Mode',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              subtitle: const Text(
-                'Toggle between light and dark appearance',
-                style: TextStyle(color: Colors.grey, fontSize: 12),
-              ),
-              secondary: const Icon(Icons.dark_mode, color: Color(0xFF008751)),
-              value: themeModeNotifier.value == ThemeMode.dark,
-              onChanged: (val) {
-                themeModeNotifier.value = val
-                    ? ThemeMode.dark
-                    : ThemeMode.light;
-                setState(() {});
-              },
-            ),
-          ],
+        content: const Text(
+          'FindAPro runs on a uniform dark theme designed for optimal battery life and readability.',
+          style: TextStyle(color: Colors.grey),
         ),
         actions: [
           TextButton(
@@ -255,25 +232,24 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         const SizedBox(height: 12),
                         _buildVerificationBadgeRow(
                           'Email Verification',
-                          currentProfile.emailVerified ||
-                              currentProfile.email.isNotEmpty,
+                          true, // Signed up via email
                           currentProfile.email,
                         ),
                         const SizedBox(height: 8),
                         _buildVerificationBadgeRow(
                           'Phone Verification',
-                          currentProfile.phoneVerified ||
-                              currentProfile.phone.isNotEmpty,
-                          currentProfile.phone,
+                          currentProfile.phoneVerified,
+                          currentProfile.phone.isNotEmpty
+                              ? currentProfile.phone
+                              : 'Not verified',
                         ),
                         const SizedBox(height: 8),
                         _buildVerificationBadgeRow(
                           'NIN Verification',
-                          currentProfile.ninVerified ||
-                              currentProfile.ninNumber.isNotEmpty,
+                          currentProfile.ninVerified,
                           currentProfile.ninNumber.isNotEmpty
                               ? 'NIN: ${currentProfile.ninNumber}'
-                              : 'Not provided',
+                              : 'NIL',
                         ),
                       ],
                     ),
@@ -300,7 +276,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 _buildMenuTile(
                   Icons.settings_outlined,
                   'Preferences',
-                  () => _showPreferencesDialog(currentProfile),
+                  _showPreferencesDialog,
                 ),
                 _buildMenuTile(Icons.person_outline, 'Account', () {}),
                 const SizedBox(height: 12),
@@ -514,7 +490,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             ),
           ),
           child: Text(
-            isVerified ? 'Verified' : 'Pending',
+            isVerified
+                ? 'Verified'
+                : (detail == 'NIL' ? 'NIL' : 'Not Verified'),
             style: TextStyle(
               color: isVerified ? const Color(0xFF008751) : Colors.orange,
               fontWeight: FontWeight.bold,
