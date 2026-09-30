@@ -385,6 +385,7 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                         profileImageUrl: _profileImageFile != null
                             ? _profileImageFile!.path
                             : '',
+                        jobStatuses: [],
                         verificationLevel: _isNinVerified ? 3 : 1,
                         emailVerified: true,
                         phoneVerified: true,

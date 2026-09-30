@@ -13,6 +13,7 @@ class UserProfile {
   final String ninNumber;
   final String description;
   final String profileImageUrl;
+  final List<String> jobStatuses;
   final int verificationLevel; // 1 to 4
   final bool emailVerified;
   final bool phoneVerified;
@@ -33,6 +34,7 @@ class UserProfile {
     required this.ninNumber,
     required this.description,
     required this.profileImageUrl,
+    required this.jobStatuses,
     required this.verificationLevel,
     required this.emailVerified,
     required this.phoneVerified,
@@ -55,6 +57,7 @@ class UserProfile {
       'ninNumber': ninNumber,
       'description': description,
       'profileImageUrl': profileImageUrl,
+      'jobStatuses': jobStatuses,
       'verificationLevel': verificationLevel,
       'emailVerified': emailVerified,
       'phoneVerified': phoneVerified,
@@ -78,6 +81,7 @@ class UserProfile {
       ninNumber: map['ninNumber'] ?? '',
       description: map['description'] ?? '',
       profileImageUrl: map['profileImageUrl'] ?? '',
+      jobStatuses: List<String>.from(map['jobStatuses'] ?? []),
       verificationLevel: map['verificationLevel'] ?? 1,
       emailVerified: map['emailVerified'] ?? false,
       phoneVerified: map['phoneVerified'] ?? false,

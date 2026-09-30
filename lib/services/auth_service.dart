@@ -223,6 +223,7 @@ class AuthService {
       ninNumber: profile.ninNumber,
       description: profile.description,
       profileImageUrl: profile.profileImageUrl,
+      jobStatuses: profile.jobStatuses,
       verificationLevel: calcVerificationLevel,
       emailVerified: profile.emailVerified,
       phoneVerified: profile.phoneVerified,

@@ -93,6 +93,7 @@ class _ProfessionalDashboardScreenState
                   ninNumber: '98765432109',
                   description: 'Certified Master Plumber serving Lagos State with 8 years of excellence.',
                   profileImageUrl: '',
+                  jobStatuses: [],
                   verificationLevel: 3,
                   emailVerified: true,
                   phoneVerified: true,

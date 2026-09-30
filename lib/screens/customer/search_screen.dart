@@ -164,6 +164,7 @@ class _SearchScreenState extends State<SearchScreen> {
                               description:
                                   'Verified professional specializing in ${pro.profession}.',
                               profileImageUrl: '',
+                              jobStatuses: [],
                               verificationLevel: pro.verificationLevel,
                               emailVerified: true,
                               phoneVerified: true,

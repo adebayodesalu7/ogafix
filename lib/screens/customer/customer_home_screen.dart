@@ -89,14 +89,18 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               if (val == 'profile') {
                 final user = FirebaseAuth.instance.currentUser;
                 if (user != null) {
-                  final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+                  final doc = await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user.uid)
+                      .get();
                   if (doc.exists && doc.data() != null) {
                     final profile = UserProfile.fromMap(doc.data()!);
                     if (!mounted) return;
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => UserProfileScreen(profile: profile),
+                        builder: (context) =>
+                            UserProfileScreen(profile: profile),
                       ),
                     );
                   }
@@ -105,8 +109,14 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             },
             itemBuilder: (context) => [
               const PopupMenuItem(value: 'profile', child: Text('My Profile')),
-              const PopupMenuItem(value: 'settings', child: Text('Account Settings')),
-              const PopupMenuItem(value: 'support', child: Text('OgaFix Support')),
+              const PopupMenuItem(
+                value: 'settings',
+                child: Text('Account Settings'),
+              ),
+              const PopupMenuItem(
+                value: 'support',
+                child: Text('OgaFix Support'),
+              ),
             ],
           ),
         ],
@@ -192,7 +202,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const SearchScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const SearchScreen(),
+                      ),
                     );
                   },
                   child: Column(
@@ -233,53 +245,41 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               },
             ),
             const SizedBox(height: 24),
-            // Verified Professionals Near You (Clean title without debug phrasing)
+            // Verified Professionals Near You (Strictly Real Firestore Data)
             const Text(
               'Verified Professionals Near You',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('professional_profiles').snapshots(),
+              stream: FirebaseFirestore.instance
+                  .collection('professional_profiles')
+                  .snapshots(),
               builder: (context, snapshot) {
-                List<UserProfile> firestorePros = [];
-                if (snapshot.hasData) {
-                  firestorePros = snapshot.data!.docs.map((doc) {
-                    return UserProfile.fromMap(doc.data() as Map<String, dynamic>);
-                  }).toList();
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20.0),
+                    child: Center(
+                      child: Text(
+                        'No verified professionals registered in the database yet.',
+                        style: TextStyle(color: Colors.grey, fontSize: 13),
+                      ),
+                    ),
+                  );
                 }
+
+                final firestorePros = snapshot.data!.docs.map((doc) {
+                  return UserProfile.fromMap(
+                    doc.data() as Map<String, dynamic>,
+                  );
+                }).toList();
 
                 return ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: firestorePros.length + MockData.professionals.length,
+                  itemCount: firestorePros.length,
                   itemBuilder: (context, index) {
-                    UserProfile profile;
-                    if (index < firestorePros.length) {
-                      profile = firestorePros[index];
-                    } else {
-                      final pro = MockData.professionals[index - firestorePros.length];
-                      profile = UserProfile(
-                        uid: pro.id,
-                        email: '${pro.name.toLowerCase().replaceAll(' ', '')}@ogafix.ng',
-                        phone: '+2348000000000',
-                        role: 'professional',
-                        fullName: pro.name,
-                        state: pro.state,
-                        lga: pro.lga,
-                        stateOfOrigin: 'Lagos State',
-                        age: 32,
-                        yearsOfExperience: 6,
-                        profession: pro.profession,
-                        ninNumber: '29384756102',
-                        description: 'Certified master artisan with over 6 years of professional experience handling repairs across Lagos.',
-                        profileImageUrl: '',
-                        verificationLevel: pro.verificationLevel,
-                        emailVerified: true,
-                        phoneVerified: true,
-                        ninVerified: true,
-                      );
-                    }
+                    final profile = firestorePros[index];
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 14),
@@ -306,7 +306,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => UserProfileScreen(profile: profile),
+                                  builder: (context) =>
+                                      UserProfileScreen(profile: profile),
                                 ),
                               );
                             },
@@ -314,7 +315,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                               radius: 28,
                               backgroundColor: const Color(0xFF008751),
                               child: Text(
-                                profile.fullName.isNotEmpty ? profile.fullName.substring(0, 1) : 'P',
+                                profile.fullName.isNotEmpty
+                                    ? profile.fullName.substring(0, 1)
+                                    : 'P',
                                 style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -330,7 +333,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => UserProfileScreen(profile: profile),
+                                    builder: (context) =>
+                                        UserProfileScreen(profile: profile),
                                   ),
                                 );
                               },
@@ -398,13 +402,17 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                           const SizedBox(width: 8),
                           // Direct Chat Button for multi-device testing
                           IconButton(
-                            icon: const Icon(Icons.chat_bubble, color: Color(0xFF008751)),
+                            icon: const Icon(
+                              Icons.chat_bubble,
+                              color: Color(0xFF008751),
+                            ),
                             tooltip: 'Chat with Professional',
                             onPressed: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => ChatScreen(peerProfile: profile),
+                                  builder: (context) =>
+                                      ChatScreen(peerProfile: profile),
                                 ),
                               );
                             },
@@ -438,13 +446,18 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           } else if (val == 3) {
             final user = FirebaseAuth.instance.currentUser;
             if (user != null) {
-              final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+              final doc = await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(user.uid)
+                  .get();
               if (doc.exists && doc.data() != null) {
                 final profile = UserProfile.fromMap(doc.data()!);
                 if (!mounted) return;
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => UserProfileScreen(profile: profile)),
+                  MaterialPageRoute(
+                    builder: (context) => UserProfileScreen(profile: profile),
+                  ),
                 );
               }
             }
