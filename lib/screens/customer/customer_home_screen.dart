@@ -7,8 +7,8 @@ import 'package:flutter/material.dart';
 import '../../models/ogafix_models.dart';
 import '../../models/user_profile_model.dart';
 import '../chat/chat_screen.dart';
+import '../chat/chats_list_screen.dart';
 import '../profile/user_profile_screen.dart';
-import 'bookings_screen.dart';
 import 'map_search_screen.dart';
 import 'post_job_screen.dart';
 import 'search_screen.dart';
@@ -63,6 +63,18 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.chat, color: Color(0xFF008751)),
+            tooltip: 'Contacted Chats / Inbox',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ChatsListScreen(),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.search, color: Color(0xFF008751)),
             tooltip: 'Search Services & Handymen',
@@ -510,7 +522,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           } else if (val == 2) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const BookingsScreen()),
+              MaterialPageRoute(builder: (context) => const ChatsListScreen()),
             );
           } else if (val == 3) {
             final user = FirebaseAuth.instance.currentUser;
@@ -536,8 +548,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.bookmark),
-            label: 'Bookings',
+            icon: Icon(Icons.chat),
+            label: 'Chats / Inbox',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],

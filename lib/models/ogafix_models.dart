@@ -193,6 +193,42 @@ class MockData {
         'API Integration & Backend',
       ],
     ),
+    Category(
+      id: 'c6',
+      name: 'Cleaning Services',
+      iconName: 'cleaning',
+      description: 'Deep cleaning, fumigation, laundry, and house chores',
+      specificServices: [
+        'Deep House Cleaning',
+        'Fumigation & Pest Control',
+        'Laundry & Ironing',
+        'Office Cleaning',
+      ],
+    ),
+    Category(
+      id: 'c7',
+      name: 'Tailoring & Fashion',
+      iconName: 'tailoring',
+      description: 'Custom native wear, alterations, and corporate tailoring',
+      specificServices: [
+        'Native Senator Wear',
+        'Suit & Blazer Tailoring',
+        'Cloth Alterations',
+        'Bridal & Event Dresses',
+      ],
+    ),
+    Category(
+      id: 'c8',
+      name: 'Security & CCTV',
+      iconName: 'security',
+      description: 'CCTV camera installation, electric fencing, and intercoms',
+      specificServices: [
+        'CCTV Camera Setup',
+        'Electric Fence Installation',
+        'Intercom & Access Control',
+        'Smart Alarm Systems',
+      ],
+    ),
   ];
 
   static final List<Professional> professionals = [];
