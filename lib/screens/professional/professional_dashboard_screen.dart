@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../models/ogafix_models.dart';
+import '../../models/user_profile_model.dart';
+import '../profile/user_profile_screen.dart';
 
 class ProfessionalDashboardScreen extends StatefulWidget {
   const ProfessionalDashboardScreen({super.key});
@@ -71,6 +73,52 @@ class _ProfessionalDashboardScreenState
               );
             },
           ),
+          // 3-Line Settings & Profile Menu Icon
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.menu, color: Color(0xFF008751)),
+            onSelected: (val) {
+              if (val == 'profile') {
+                final demoProProfile = UserProfile(
+                  uid: 'pro1',
+                  email: 'professional@ogafix.ng',
+                  phone: '+2348011905411',
+                  role: 'professional',
+                  fullName: 'Emeka Okafor',
+                  state: 'Lagos State',
+                  lga: 'Eti-Osa',
+                  stateOfOrigin: 'Anambra',
+                  age: 34,
+                  yearsOfExperience: 8,
+                  profession: 'Master Plumber',
+                  ninNumber: '98765432109',
+                  description: 'Certified Master Plumber serving Lagos State with 8 years of excellence.',
+                  profileImageUrl: '',
+                  verificationLevel: 3,
+                  emailVerified: true,
+                  phoneVerified: true,
+                  ninVerified: true,
+                );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        UserProfileScreen(profile: demoProProfile),
+                  ),
+                );
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'profile', child: Text('My Profile')),
+              const PopupMenuItem(
+                value: 'settings',
+                child: Text('Business Settings'),
+              ),
+              const PopupMenuItem(
+                value: 'support',
+                child: Text('OgaFix Pro Support'),
+              ),
+            ],
+          ),
         ],
       ),
       body: _currentIndex == 0
@@ -81,6 +129,7 @@ class _ProfessionalDashboardScreenState
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         selectedItemColor: const Color(0xFF008751),
+        unselectedItemColor: Colors.grey,
         onTap: (val) => setState(() => _currentIndex = val),
         items: const [
           BottomNavigationBarItem(

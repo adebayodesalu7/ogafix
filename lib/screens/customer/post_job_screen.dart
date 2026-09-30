@@ -12,7 +12,7 @@ class PostJobScreen extends StatefulWidget {
 
 class _PostJobScreenState extends State<PostJobScreen> {
   Category? selectedCategory;
-  String? selectedSpecificService;
+  final List<String> selectedSpecificServices = [];
   String selectedState = LagosData.state;
   String selectedLga = LagosData.localGovernments[0];
   String locationStamp = 'Stamped: 6.4527° N, 3.3883° E (GPS Verified)';
@@ -57,32 +57,45 @@ class _PostJobScreenState extends State<PostJobScreen> {
               onChanged: (val) {
                 setState(() {
                   selectedCategory = val;
-                  selectedSpecificService = null;
+                  selectedSpecificServices.clear();
                 });
               },
             ),
             if (selectedCategory != null) ...[
               const SizedBox(height: 16),
               const Text(
-                'Select Specific Professional Service',
+                'Select Specific Professional Services (Multiple Selection)',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 6),
-              DropdownButtonFormField<String>(
-                value: selectedSpecificService,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                ),
-                hint: const Text('Select exact service type'),
-                items: selectedCategory!.specificServices.map((service) {
-                  return DropdownMenuItem(value: service, child: Text(service));
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: selectedCategory!.specificServices.map((service) {
+                  final isSelected = selectedSpecificServices.contains(service);
+                  return FilterChip(
+                    label: Text(
+                      service,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isSelected ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                    selected: isSelected,
+                    selectedColor: const Color(0xFF008751),
+                    backgroundColor: Colors.grey.shade200,
+                    checkmarkColor: Colors.white,
+                    onSelected: (bool selected) {
+                      setState(() {
+                        if (selected) {
+                          selectedSpecificServices.add(service);
+                        } else {
+                          selectedSpecificServices.remove(service);
+                        }
+                      });
+                    },
+                  );
                 }).toList(),
-                onChanged: (val) =>
-                    setState(() => selectedSpecificService = val),
               ),
             ],
             const SizedBox(height: 24),
@@ -98,37 +111,59 @@ class _PostJobScreenState extends State<PostJobScreen> {
             Row(
               children: [
                 Expanded(
+                  flex: 1,
                   child: DropdownButtonFormField<String>(
                     value: selectedState,
+                    isExpanded: true,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                       filled: true,
                       fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 12,
+                      ),
                     ),
                     items: [LagosData.state].map((st) {
-                      return DropdownMenuItem(value: st, child: Text(st));
+                      return DropdownMenuItem(
+                        value: st,
+                        child: Text(
+                          st,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      );
                     }).toList(),
                     onChanged: (val) {},
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 Expanded(
                   flex: 2,
                   child: DropdownButtonFormField<String>(
                     value: selectedLga,
+                    isExpanded: true,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                       filled: true,
                       fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 12,
+                      ),
                     ),
                     items: LagosData.localGovernments.map((lga) {
                       return DropdownMenuItem(
                         value: lga,
-                        child: Text(lga, overflow: TextOverflow.ellipsis),
+                        child: Text(
+                          lga,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 13),
+                        ),
                       );
                     }).toList(),
                     onChanged: (val) {
@@ -199,13 +234,25 @@ class _PostJobScreenState extends State<PostJobScreen> {
             Row(
               children: [
                 OutlinedButton.icon(
-                  onPressed: () {},
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Photo uploaded successfully!'),
+                      ),
+                    );
+                  },
                   icon: const Icon(Icons.camera_alt, color: Color(0xFF008751)),
                   label: const Text('Add Photo'),
                 ),
                 const SizedBox(width: 12),
                 OutlinedButton.icon(
-                  onPressed: () {},
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Voice note recorded & attached!'),
+                      ),
+                    );
+                  },
                   icon: const Icon(Icons.mic, color: Color(0xFF008751)),
                   label: const Text('Voice Note'),
                 ),
@@ -213,7 +260,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
             ),
             const SizedBox(height: 24),
             const Text(
-              '4. Budget & Timing',
+              '4. Budget & Timing (Naira Currency)',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -223,12 +270,14 @@ class _PostJobScreenState extends State<PostJobScreen> {
             const SizedBox(height: 8),
             TextField(
               controller: _budgetController,
-              keyboardType: TextInputType.number,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               decoration: InputDecoration(
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                hintText: 'Estimated budget',
+                hintText: 'e.g. 150,000.00 (Thousands / Millions)',
                 prefixText: '₦ ',
                 filled: true,
                 fillColor: Colors.white,
@@ -261,11 +310,11 @@ class _PostJobScreenState extends State<PostJobScreen> {
               child: ElevatedButton(
                 onPressed: () {
                   if (selectedCategory == null ||
-                      selectedSpecificService == null) {
+                      selectedSpecificServices.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
-                          'Please select a category and specific service.',
+                          'Please select a category and at least one specific service.',
                         ),
                       ),
                     );

@@ -183,6 +183,7 @@ class AuthService {
       profession: profile.profession,
       ninNumber: profile.ninNumber,
       description: profile.description,
+      profileImageUrl: profile.profileImageUrl,
       verificationLevel: calcVerificationLevel,
       emailVerified: profile.emailVerified,
       phoneVerified: profile.phoneVerified,

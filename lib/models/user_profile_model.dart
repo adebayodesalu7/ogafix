@@ -12,6 +12,7 @@ class UserProfile {
   final String profession;
   final String ninNumber;
   final String description;
+  final String profileImageUrl;
   final int verificationLevel; // 1 to 4
   final bool emailVerified;
   final bool phoneVerified;
@@ -31,6 +32,7 @@ class UserProfile {
     required this.profession,
     required this.ninNumber,
     required this.description,
+    required this.profileImageUrl,
     required this.verificationLevel,
     required this.emailVerified,
     required this.phoneVerified,
@@ -52,6 +54,7 @@ class UserProfile {
       'profession': profession,
       'ninNumber': ninNumber,
       'description': description,
+      'profileImageUrl': profileImageUrl,
       'verificationLevel': verificationLevel,
       'emailVerified': emailVerified,
       'phoneVerified': phoneVerified,
@@ -74,6 +77,7 @@ class UserProfile {
       profession: map['profession'] ?? '',
       ninNumber: map['ninNumber'] ?? '',
       description: map['description'] ?? '',
+      profileImageUrl: map['profileImageUrl'] ?? '',
       verificationLevel: map['verificationLevel'] ?? 1,
       emailVerified: map['emailVerified'] ?? false,
       phoneVerified: map['phoneVerified'] ?? false,

@@ -254,6 +254,7 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                             : 'Customer',
                         ninNumber: _ninController.text.trim(),
                         description: _descController.text.trim(),
+                        profileImageUrl: '',
                         verificationLevel: 3, // Verified with NIN & Phone
                         emailVerified: true,
                         phoneVerified: true,

@@ -15,6 +15,8 @@ class CustomerHomeScreen extends StatefulWidget {
 
 class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   String selectedLocation = 'Lekki Phase 1, Lagos';
+  int _bottomNavIndex = 0;
+
   final List<String> lagosLocations = [
     'Lekki Phase 1, Lagos',
     'Victoria Island, Lagos',
@@ -65,9 +67,51 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
+          // 3-Line Settings & Profile Menu Icon
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.menu, color: Color(0xFF008751)),
+            onSelected: (val) {
+              if (val == 'profile') {
+                final demoProfile = UserProfile(
+                  uid: 'cust1',
+                  email: 'customer@ogafix.ng',
+                  phone: '+2348011905411',
+                  role: 'customer',
+                  fullName: 'Adebayo Desalu',
+                  state: 'Lagos State',
+                  lga: 'Eti-Osa',
+                  stateOfOrigin: 'Lagos',
+                  age: 28,
+                  yearsOfExperience: 0,
+                  profession: 'Customer',
+                  ninNumber: '12345678901',
+                  description: 'OgaFix Valued Customer Account in Lagos.',
+                  profileImageUrl: '',
+                  verificationLevel: 2,
+                  emailVerified: true,
+                  phoneVerified: true,
+                  ninVerified: true,
+                );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        UserProfileScreen(profile: demoProfile),
+                  ),
+                );
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'profile', child: Text('My Profile')),
+              const PopupMenuItem(
+                value: 'settings',
+                child: Text('Account Settings'),
+              ),
+              const PopupMenuItem(
+                value: 'support',
+                child: Text('OgaFix Support'),
+              ),
+            ],
           ),
         ],
       ),
@@ -199,7 +243,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 final pro = MockData.professionals[index];
                 return InkWell(
                   onTap: () {
-                    // Open full profile detail view
                     final userProfile = UserProfile(
                       uid: pro.id,
                       email:
@@ -215,6 +258,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                       profession: pro.profession,
                       ninNumber: '29384756102',
                       description: 'Certified master artisan with over 6 years of professional experience handling residential and commercial repairs across Lagos State.',
+                      profileImageUrl: '',
                       verificationLevel: pro.verificationLevel,
                       emailVerified: true,
                       phoneVerified: true,
@@ -232,9 +276,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                     margin: const EdgeInsets.only(bottom: 14),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(
-                        0xFFE8F5E9,
-                      ), // Greenish design box (Screenshot 3)
+                      color: const Color(0xFFE8F5E9), // Greenish design box
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: Colors.green.shade200,
@@ -329,6 +371,21 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _bottomNavIndex,
+        selectedItemColor: const Color(0xFF008751),
+        unselectedItemColor: Colors.grey,
+        onTap: (val) => setState(() => _bottomNavIndex = val),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bookmark),
+            label: 'Bookings',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        ],
       ),
     );
   }
