@@ -6,9 +6,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await Firebase.initializeApp().timeout(const Duration(seconds: 5));
-  } catch (e) {
-    debugPrint('Firebase initialization timeout or error: $e');
-  }
+  } catch (_) {}
   runApp(const OgaFixApp());
 }
 
