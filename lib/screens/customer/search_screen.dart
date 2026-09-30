@@ -1,4 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
+import '../../models/user_profile_model.dart';
+import '../chat/chats_list_screen.dart';
+import '../profile/user_profile_screen.dart';
+import 'customer_home_screen.dart';
+import 'map_search_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -204,7 +212,13 @@ class _SearchScreenState extends State<SearchScreen>
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Interests updated successfully!'),
+                        ),
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: Colors.black,
@@ -284,6 +298,63 @@ class _SearchScreenState extends State<SearchScreen>
               ],
             ),
           ),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 2,
+        backgroundColor: const Color(0xFF1E1E1E),
+        selectedItemColor: const Color(0xFF008751),
+        unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
+        onTap: (val) async {
+          if (val == 0) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CustomerHomeScreen(),
+              ),
+            );
+          } else if (val == 1) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const ChatsListScreen()),
+            );
+          } else if (val == 2) {
+            // Already here
+          } else if (val == 3) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const MapSearchScreen()),
+            );
+          } else if (val == 4) {
+            final user = FirebaseAuth.instance.currentUser;
+            if (user != null) {
+              final doc = await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(user.uid)
+                  .get();
+              if (doc.exists && doc.data() != null) {
+                final profile = UserProfile.fromMap(doc.data()!);
+                if (!context.mounted) return;
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UserProfileScreen(profile: profile),
+                  ),
+                );
+              }
+            }
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.mail_outline), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: ''),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.assignment_outlined),
+            label: '',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: ''),
         ],
       ),
     );

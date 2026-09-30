@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../models/user_profile_model.dart';
 import '../services/auth_service.dart';
 import 'auth/profile_onboarding_screen.dart';
 import 'auth/welcome_role_screen.dart';
@@ -29,7 +30,12 @@ class _SplashScreenState extends State<SplashScreen> {
 
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final profile = await _authService.getUserProfile(user.uid);
+      UserProfile? profile;
+      try {
+        profile = await _authService
+            .getUserProfile(user.uid)
+            .timeout(const Duration(seconds: 3));
+      } catch (_) {}
       if (!mounted) return;
 
       if (profile != null) {
