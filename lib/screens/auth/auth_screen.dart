@@ -30,119 +30,191 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         title: Text(
           _isSignUp
               ? 'OgaFix Signup (${widget.role})'
               : 'OgaFix Sign In (${widget.role})',
         ),
+        backgroundColor: Colors.white,
+        elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Icon(
-              Icons.handyman_rounded,
-              size: 64,
-              color: Color(0xFF008751),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              _isSignUp ? 'Create Your Account' : 'Welcome Back to OgaFix',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Sign up or sign in using either Email or Phone Number with 2FA security.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey, fontSize: 13),
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _identifierController,
-              decoration: InputDecoration(
-                labelText: 'Email Address or Phone Number (+234...)',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                filled: true,
-                fillColor: Colors.white,
-                prefixIcon: const Icon(Icons.person_outline),
-              ),
-              onChanged: (val) {
-                setState(() {
-                  _isPhoneInput =
-                      double.tryParse(val.replaceAll('+', '')) != null ||
-                      val.startsWith('+') ||
-                      val.length >= 10 && !val.contains('@');
-                });
-              },
-            ),
-            const SizedBox(height: 16),
-            if (!_isPhoneInput) ...[
-              TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+      body: Stack(
+        children: [
+          // Low-opacity Green Leaf / Curved Graphic Accent (inspired by design request)
+          Positioned(
+            top: -50,
+            right: -50,
+            child: Opacity(
+              opacity: 0.12,
+              child: Container(
+                width: 220,
+                height: 220,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF008751),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(150),
+                    topLeft: Radius.circular(50),
+                    bottomRight: Radius.circular(50),
                   ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  prefixIcon: const Icon(Icons.lock_outline),
                 ),
               ),
-              const SizedBox(height: 24),
-            ],
-            if (_otpSent) ...[
-              TextField(
-                controller: _otpController,
-                keyboardType: TextInputType.number,
-                maxLength: 6,
-                decoration: InputDecoration(
-                  labelText: 'Enter 6-Digit SMS OTP',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
+            ),
+          ),
+          Positioned(
+            top: 100,
+            left: -40,
+            child: Opacity(
+              opacity: 0.08,
+              child: Container(
+                width: 160,
+                height: 160,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF008751),
+                  shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(height: 24),
-            ],
-            ElevatedButton(
-              onPressed: _isLoading ? null : _handleSubmit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF008751),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                textStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              child: _isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : Text(
-                      _otpSent
-                          ? 'Verify OTP & Continue'
-                          : (_isSignUp ? 'Continue Signup' : 'Sign In'),
+            ),
+          ),
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 12),
+                // Green Spanner / Fix Icon Badge
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF008751).withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFF008751).withValues(alpha: 0.3),
+                        width: 2,
+                      ),
                     ),
+                    child: const Icon(
+                      Icons.handyman_rounded,
+                      size: 48,
+                      color: Color(0xFF008751),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  _isSignUp ? 'Create Your Account' : 'Welcome Back to OgaFix',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1D1D1D),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Sign up or sign in using either Email or Phone Number with 2FA security.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+                const SizedBox(height: 32),
+                TextField(
+                  controller: _identifierController,
+                  decoration: InputDecoration(
+                    labelText: 'Email Address or Phone Number (+234...)',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    prefixIcon: const Icon(
+                      Icons.person_outline,
+                      color: Color(0xFF008751),
+                    ),
+                  ),
+                  onChanged: (val) {
+                    setState(() {
+                      _isPhoneInput =
+                          double.tryParse(val.replaceAll('+', '')) != null ||
+                          val.startsWith('+') ||
+                          val.length >= 10 && !val.contains('@');
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                if (!_isPhoneInput) ...[
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      prefixIcon: const Icon(
+                        Icons.lock_outline,
+                        color: Color(0xFF008751),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+                if (_otpSent) ...[
+                  TextField(
+                    controller: _otpController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                    decoration: InputDecoration(
+                      labelText: 'Enter 6-Digit SMS OTP',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _handleSubmit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF008751),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child:
+                      _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : Text(
+                              _otpSent
+                                  ? 'Verify OTP & Continue'
+                                  : (_isSignUp ? 'Continue Signup' : 'Sign In'),
+                            ),
+                ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () => setState(() => _isSignUp = !_isSignUp),
+                  child: Text(
+                    _isSignUp
+                        ? 'Already have an account? Sign In'
+                        : "Don't have an account? Sign Up",
+                    style: const TextStyle(color: Color(0xFF008751)),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: () => setState(() => _isSignUp = !_isSignUp),
-              child: Text(
-                _isSignUp
-                    ? 'Already have an account? Sign In'
-                    : "Don't have an account? Sign Up",
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -164,9 +236,10 @@ class _AuthScreenState extends State<AuthScreen> {
       if (_isPhoneInput) {
         // Phone Authentication flow
         if (!_otpSent) {
-          final formattedPhone = identifier.startsWith('+')
-              ? identifier
-              : '+234${identifier.startsWith('0') ? identifier.substring(1) : identifier}';
+          final formattedPhone =
+              identifier.startsWith('+')
+                  ? identifier
+                  : '+234${identifier.startsWith('0') ? identifier.substring(1) : identifier}';
 
           // Check if phone already used
           final existing = await _authService.checkExistingUser(
@@ -201,9 +274,9 @@ class _AuthScreenState extends State<AuthScreen> {
             },
             onError: (err) {
               setState(() => _isLoading = false);
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text('Phone Auth Error: $err')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Phone Auth Error: $err')),
+              );
             },
           );
         } else {
@@ -221,12 +294,13 @@ class _AuthScreenState extends State<AuthScreen> {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ProfileOnboardingScreen(
-                    uid: userCred!.user!.uid,
-                    email: '',
-                    phone: identifier,
-                    role: widget.role,
-                  ),
+                  builder:
+                      (context) => ProfileOnboardingScreen(
+                        uid: userCred!.user!.uid,
+                        email: '',
+                        phone: identifier,
+                        role: widget.role,
+                      ),
                 ),
               );
             } else {
@@ -275,12 +349,13 @@ class _AuthScreenState extends State<AuthScreen> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => ProfileOnboardingScreen(
-                uid: userCred.user!.uid,
-                email: identifier,
-                phone: '',
-                role: widget.role,
-              ),
+              builder:
+                  (context) => ProfileOnboardingScreen(
+                    uid: userCred.user!.uid,
+                    email: identifier,
+                    phone: '',
+                    role: widget.role,
+                  ),
             ),
           );
         } else {
@@ -295,8 +370,9 @@ class _AuthScreenState extends State<AuthScreen> {
       }
     } catch (e) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Authentication error: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Authentication error: $e')),
+      );
     }
   }
 
