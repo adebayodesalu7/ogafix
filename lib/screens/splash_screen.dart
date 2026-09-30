@@ -2,8 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
-import 'auth/login_screen.dart';
 import 'auth/profile_onboarding_screen.dart';
+import 'auth/welcome_role_screen.dart';
 import 'customer/customer_home_screen.dart';
 import 'professional/professional_dashboard_screen.dart';
 
@@ -29,7 +29,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      // Check if profile exists in Firestore
       final profile = await _authService.getUserProfile(user.uid);
       if (!mounted) return;
 
@@ -48,7 +47,6 @@ class _SplashScreenState extends State<SplashScreen> {
           );
         }
       } else {
-        // Profile missing - force onboarding
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -64,7 +62,7 @@ class _SplashScreenState extends State<SplashScreen> {
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        MaterialPageRoute(builder: (context) => const WelcomeRoleScreen()),
       );
     }
   }
