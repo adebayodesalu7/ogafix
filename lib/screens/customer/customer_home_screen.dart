@@ -40,24 +40,28 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           children: [
             const Icon(Icons.location_on, color: Color(0xFF008751), size: 20),
             const SizedBox(width: 4),
-            DropdownButton<String>(
-              value: selectedLocation,
-              underline: const SizedBox(),
-              items: lagosLocations.map((loc) {
-                return DropdownMenuItem(
-                  value: loc,
-                  child: Text(
-                    loc,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
+            Expanded(
+              child: DropdownButton<String>(
+                value: selectedLocation,
+                isExpanded: true,
+                underline: const SizedBox(),
+                items: lagosLocations.map((loc) {
+                  return DropdownMenuItem(
+                    value: loc,
+                    child: Text(
+                      loc,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                );
-              }).toList(),
-              onChanged: (val) {
-                if (val != null) setState(() => selectedLocation = val);
-              },
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) setState(() => selectedLocation = val);
+                },
+              ),
             ),
           ],
         ),
@@ -506,6 +510,61 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 0,
+        backgroundColor: const Color(0xFF1E1E1E),
+        selectedItemColor: const Color(0xFF008751),
+        unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
+        onTap: (val) async {
+          if (val == 0) {
+            // Already home
+          } else if (val == 1) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const ChatsListScreen()),
+            );
+          } else if (val == 2) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const SearchScreen()),
+            );
+          } else if (val == 3) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const MapSearchScreen()),
+            );
+          } else if (val == 4) {
+            final user = FirebaseAuth.instance.currentUser;
+            if (user != null) {
+              final doc = await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(user.uid)
+                  .get();
+              if (doc.exists && doc.data() != null) {
+                final profile = UserProfile.fromMap(doc.data()!);
+                if (!mounted) return;
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UserProfileScreen(profile: profile),
+                  ),
+                );
+              }
+            }
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.mail_outline), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: ''),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.assignment_outlined),
+            label: '',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: ''),
+        ],
       ),
     );
   }
