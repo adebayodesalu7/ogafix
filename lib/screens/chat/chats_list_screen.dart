@@ -1,4 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert:cloud_firestore/cloud_firestore.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -53,6 +54,16 @@ class ChatsListScreen extends StatelessWidget {
             itemCount: profiles.length,
             itemBuilder: (context, index) {
               final peer = profiles[index];
+
+              ImageProvider? avatarImg;
+              if (peer.profileImageUrl.startsWith('data:image')) {
+                try {
+                  avatarImg = MemoryImage(
+                    base64Decode(peer.profileImageUrl.split(',').last),
+                  );
+                } catch (_) {}
+              }
+
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
                 shape: RoundedRectangleBorder(
@@ -63,15 +74,18 @@ class ChatsListScreen extends StatelessWidget {
                   leading: CircleAvatar(
                     radius: 24,
                     backgroundColor: const Color(0xFF008751),
-                    child: Text(
-                      peer.fullName.isNotEmpty
-                          ? peer.fullName.substring(0, 1)
-                          : 'U',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    backgroundImage: avatarImg,
+                    child: avatarImg == null
+                        ? Text(
+                            peer.fullName.isNotEmpty
+                                ? peer.fullName.substring(0, 1)
+                                : 'U',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                        : null,
                   ),
                   title: Text(
                     peer.fullName,
