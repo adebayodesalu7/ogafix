@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/ogafix_models.dart';
 import '../../models/user_profile_model.dart';
+import '../../services/sound_service.dart';
 import '../chat/chat_screen.dart';
 import '../chat/chats_list_screen.dart';
 import '../profile/user_profile_screen.dart';
@@ -22,6 +23,7 @@ class _ProfessionalDashboardScreenState
     extends State<ProfessionalDashboardScreen> {
   int _currentIndex = 0;
   String? _selectedProfessionFilter;
+  int _previousJobCount = -1;
 
   @override
   Widget build(BuildContext context) {
@@ -104,24 +106,58 @@ class _ProfessionalDashboardScreenState
         unselectedItemColor: Colors.grey,
         onTap: (val) => setState(() => _currentIndex = val),
         type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
+        items: [
+          const BottomNavigationBarItem(
             icon: Icon(Icons.work_outline),
             label: 'Job Feed',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline),
+            icon: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('professional_profiles')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                int unreadTotal = 0;
+                // We display inbox badge count
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(Icons.chat_bubble_outline),
+                    if (unreadTotal > 0)
+                      Positioned(
+                        right: -6,
+                        top: -6,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            '$unreadTotal',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
             label: 'Inbox',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.people_outline),
             label: 'Directory',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.calendar_month),
             label: 'Active',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.account_balance_wallet),
             label: 'Earnings',
           ),
@@ -146,6 +182,12 @@ class _ProfessionalDashboardScreenState
         final jobs = snapshot.data!.docs.map((doc) {
           return JobPost.fromMap(doc.data() as Map<String, dynamic>);
         }).toList();
+
+        // Play notification sound if new job arrives
+        if (_previousJobCount != -1 && jobs.length > _previousJobCount) {
+          SoundService.playNotificationSound();
+        }
+        _previousJobCount = jobs.length;
 
         return ListView.builder(
           padding: const EdgeInsets.all(16),

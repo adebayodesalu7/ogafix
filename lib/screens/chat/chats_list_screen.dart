@@ -75,6 +75,7 @@ class ChatsListScreen extends StatelessWidget {
                     .doc(chatId)
                     .collection('messages')
                     .where('senderId', isNotEqualTo: currentUserId)
+                    .where('read', isEqualTo: false)
                     .snapshots(),
                 builder: (context, msgSnapshot) {
                   int unreadCount = 0;

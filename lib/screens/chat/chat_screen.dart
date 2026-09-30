@@ -29,6 +29,29 @@ class _ChatScreenState extends State<ChatScreen> {
         : '${peerUserId}_$currentUserId';
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _markMessagesAsRead();
+  }
+
+  Future<void> _markMessagesAsRead() async {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    try {
+      final unreadDocs = await FirebaseFirestore.instance
+          .collection('chats')
+          .doc(_chatId)
+          .collection('messages')
+          .where('senderId', isNotEqualTo: currentUserId)
+          .where('read', isEqualTo: false)
+          .get();
+
+      for (var doc in unreadDocs.docs) {
+        doc.reference.update({'read': true});
+      }
+    } catch (_) {}
+  }
+
   Future<void> _sendMessage({
     required String text,
     String type = 'text',
@@ -45,6 +68,7 @@ class _ChatScreenState extends State<ChatScreen> {
       text: text,
       type: type,
       mediaUrl: mediaUrl,
+      read: false,
       timestamp: DateTime.now(),
     );
 
@@ -273,7 +297,10 @@ class _ChatScreenState extends State<ChatScreen> {
                                   ),
                                 ),
                               ),
-                            Text(msg.text, style: const TextStyle(fontSize: 15)),
+                            Text(
+                              msg.text,
+                              style: const TextStyle(fontSize: 15),
+                            ),
                             const SizedBox(height: 4),
                             Text(
                               '${msg.timestamp.hour}:${msg.timestamp.minute.toString().padLeft(2, '0')}',

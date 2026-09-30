@@ -5,6 +5,7 @@ class ChatMessage {
   final String text;
   final String type; // 'text', 'image', 'video', 'document', 'voice'
   final String? mediaUrl;
+  final bool read;
   final DateTime timestamp;
 
   ChatMessage({
@@ -14,6 +15,7 @@ class ChatMessage {
     required this.text,
     required this.type,
     this.mediaUrl,
+    this.read = false,
     required this.timestamp,
   });
 
@@ -25,6 +27,7 @@ class ChatMessage {
       'text': text,
       'type': type,
       'mediaUrl': mediaUrl,
+      'read': read,
       'timestamp': timestamp.toIso8601String(),
     };
   }
@@ -37,6 +40,7 @@ class ChatMessage {
       text: map['text'] ?? '',
       type: map['type'] ?? 'text',
       mediaUrl: map['mediaUrl'],
+      read: map['read'] ?? false,
       timestamp: map['timestamp'] != null
           ? DateTime.parse(map['timestamp'])
           : DateTime.now(),
