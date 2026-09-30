@@ -228,6 +228,58 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                // Tiered Verification Badges Section
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20.0,
+                    vertical: 8.0,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E1E1E),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade800),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Tiered Verification Badges',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildVerificationBadgeRow(
+                          'Email Verification',
+                          currentProfile.emailVerified ||
+                              currentProfile.email.isNotEmpty,
+                          currentProfile.email,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildVerificationBadgeRow(
+                          'Phone Verification',
+                          currentProfile.phoneVerified ||
+                              currentProfile.phone.isNotEmpty,
+                          currentProfile.phone,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildVerificationBadgeRow(
+                          'NIN Verification',
+                          currentProfile.ninVerified ||
+                              currentProfile.ninNumber.isNotEmpty,
+                          currentProfile.ninNumber.isNotEmpty
+                              ? 'NIN: ${currentProfile.ninNumber}'
+                              : 'Not provided',
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 _buildMenuTile(Icons.bookmark_border, 'My interests', () {}),
                 _buildMenuTile(Icons.send_outlined, 'Invite friends', () {}),
                 const SizedBox(height: 12),
@@ -276,7 +328,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   Icons.card_giftcard,
                   'Become a seller',
                   () async {
-                    // Switch role to professional
                     final updatedProfile = UserProfile(
                       uid: currentProfile.uid,
                       email: currentProfile.email,
@@ -415,6 +466,63 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildVerificationBadgeRow(
+    String title,
+    bool isVerified,
+    String detail,
+  ) {
+    return Row(
+      children: [
+        Icon(
+          isVerified ? Icons.verified : Icons.pending,
+          color: isVerified ? const Color(0xFF008751) : Colors.orange,
+          size: 20,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+              Text(
+                detail,
+                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: isVerified
+                ? const Color(0xFF008751).withValues(alpha: 0.15)
+                : Colors.orange.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isVerified ? const Color(0xFF008751) : Colors.orange,
+            ),
+          ),
+          child: Text(
+            isVerified ? 'Verified' : 'Pending',
+            style: TextStyle(
+              color: isVerified ? const Color(0xFF008751) : Colors.orange,
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
