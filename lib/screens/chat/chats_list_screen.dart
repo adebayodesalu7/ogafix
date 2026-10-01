@@ -5,10 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/user_profile_model.dart';
-import '../customer/customer_home_screen.dart';
-import '../customer/map_search_screen.dart';
-import '../customer/search_screen.dart';
-import '../profile/user_profile_screen.dart';
 import 'chat_screen.dart';
 
 class ChatsListScreen extends StatelessWidget {
@@ -19,10 +15,11 @@ class ChatsListScreen extends StatelessWidget {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return Scaffold(
+      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        title: const Text('Messages & Inbox'),
-        backgroundColor: const Color(0xFF008751),
-        foregroundColor: Colors.white,
+        title: const Text('Messages & Inbox', style: TextStyle(color: Colors.white)),
+        backgroundColor: const Color(0xFF1E1E1E),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -89,8 +86,10 @@ class ChatsListScreen extends StatelessWidget {
 
                   return Card(
                     margin: const EdgeInsets.only(bottom: 12),
+                    color: const Color(0xFF1E1E1E),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(color: Colors.grey.shade800),
                     ),
                     child: ListTile(
                       contentPadding: const EdgeInsets.all(12),
@@ -115,11 +114,12 @@ class ChatsListScreen extends StatelessWidget {
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
+                          color: Colors.white,
                         ),
                       ),
                       subtitle: Text(
                         peer.profession,
-                        style: const TextStyle(color: Color(0xFF006633)),
+                        style: const TextStyle(color: Color(0xFF008751)),
                       ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -152,54 +152,6 @@ class ChatsListScreen extends StatelessWidget {
                           ),
                         );
                       },
-                      onLongPress: () {
-                        showModalBottomSheet(
-                          context: context,
-                          builder: (context) => Container(
-                            padding: const EdgeInsets.all(20),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                ListTile(
-                                  leading: const Icon(
-                                    Icons.archive,
-                                    color: Color(0xFF008751),
-                                  ),
-                                  title: const Text('Archive Chat'),
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                  },
-                                ),
-                                ListTile(
-                                  leading: const Icon(
-                                    Icons.delete,
-                                    color: Colors.red,
-                                  ),
-                                  title: const Text(
-                                    'Delete Chat History',
-                                    style: TextStyle(color: Colors.red),
-                                  ),
-                                  onTap: () async {
-                                    Navigator.pop(context);
-                                    final batch = FirebaseFirestore.instance
-                                        .batch();
-                                    final messagesSnapshot =
-                                        await FirebaseFirestore.instance
-                                            .collection('chats')
-                                            .doc(chatId)
-                                            .collection('messages')
-                                            .get();
-                                    for (var doc in messagesSnapshot.docs) {
-                                      batch.delete(doc.reference);
-                                    }
-                                    await batch.commit();
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
                     ),
                   );
                 },
@@ -207,63 +159,6 @@ class ChatsListScreen extends StatelessWidget {
             },
           );
         },
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1,
-        backgroundColor: const Color(0xFF1E1E1E),
-        selectedItemColor: const Color(0xFF008751),
-        unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed,
-        onTap: (val) async {
-          if (val == 0) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const CustomerHomeScreen(),
-              ),
-            );
-          } else if (val == 1) {
-            // Already here
-          } else if (val == 2) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const SearchScreen()),
-            );
-          } else if (val == 3) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const MapSearchScreen()),
-            );
-          } else if (val == 4) {
-            final user = FirebaseAuth.instance.currentUser;
-            if (user != null) {
-              final doc = await FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(user.uid)
-                  .get();
-              if (doc.exists && doc.data() != null) {
-                final profile = UserProfile.fromMap(doc.data()!);
-                if (!context.mounted) return;
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => UserProfileScreen(profile: profile),
-                  ),
-                );
-              }
-            }
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.mail_outline), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: ''),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.assignment_outlined),
-            label: '',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: ''),
-        ],
       ),
     );
   }
