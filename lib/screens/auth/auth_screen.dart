@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../services/auth_service.dart';
@@ -38,11 +39,12 @@ class _AuthScreenState extends State<AuthScreen> {
               : 'FindAPro Sign In (${widget.role})',
         ),
         backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
         elevation: 0,
       ),
       body: Stack(
         children: [
-          // Low-opacity Green Leaf / Curved Graphic Accent (inspired by design request)
+          // Low-opacity Green Leaf / Curved Graphic Accent
           Positioned(
             top: -50,
             right: -50,
@@ -62,28 +64,12 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
             ),
           ),
-          Positioned(
-            top: 100,
-            left: -40,
-            child: Opacity(
-              opacity: 0.08,
-              child: Container(
-                width: 160,
-                height: 160,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF008751),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-          ),
           SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 12),
-                // Green Spanner / Fix Icon Badge
                 Center(
                   child: Container(
                     padding: const EdgeInsets.all(16),
@@ -116,7 +102,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'Sign up or sign in using either Email or Phone Number with 2FA security.',
+                  'Sign up or sign in using Email, Phone Number, or Google Sign-In.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.grey, fontSize: 13),
                 ),
@@ -150,7 +136,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     controller: _passwordController,
                     obscureText: true,
                     decoration: InputDecoration(
-                      labelText: 'Password',
+                      labelText: 'Password (min 6 chars)',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -162,45 +148,77 @@ class _AuthScreenState extends State<AuthScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                 ],
-                if (_otpSent) ...[
+                if (_isPhoneInput && _otpSent) ...[
                   TextField(
                     controller: _otpController,
                     keyboardType: TextInputType.number,
                     maxLength: 6,
                     decoration: InputDecoration(
-                      labelText: 'Enter 6-Digit SMS OTP',
+                      labelText: 'Enter 6-Digit OTP',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       filled: true,
                       fillColor: Colors.white,
+                      prefixIcon: const Icon(
+                        Icons.sms_outlined,
+                        color: Color(0xFF008751),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                 ],
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _handleSubmit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF008751),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    textStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _handleSubmit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF008751),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : Text(
+                            _otpSent
+                                ? 'Verify OTP & Continue'
+                                : (_isSignUp ? 'Continue Signup' : 'Sign In'),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Google Sign-In Button (for both service seller and service finder)
+                OutlinedButton.icon(
+                  onPressed: _isLoading ? null : _handleGoogleSignIn,
+                  icon: const Icon(
+                    Icons.g_mobiledata,
+                    size: 32,
+                    color: Color(0xFF008751),
+                  ),
+                  label: const Text(
+                    'Continue with Google',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
+                    side: const BorderSide(color: Colors.grey, width: 1.5),
                   ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : Text(
-                          _otpSent
-                              ? 'Verify OTP & Continue'
-                              : (_isSignUp ? 'Continue Signup' : 'Sign In'),
-                        ),
                 ),
                 const SizedBox(height: 16),
                 TextButton(
@@ -218,6 +236,41 @@ class _AuthScreenState extends State<AuthScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      final result = await _authService.signInWithGoogle();
+      final userCred = result['userCred'] as UserCredential?;
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (userCred?.user != null) {
+        final profile = await _authService.getUserProfile(userCred!.user!.uid);
+        if (!mounted) return;
+
+        if (profile != null) {
+          _navigateHome(profile.role);
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProfileOnboardingScreen(
+                uid: userCred.user!.uid,
+                email: userCred.user!.email ?? '',
+                phone: userCred.user!.phoneNumber ?? '',
+                role: widget.role,
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Google Sign-In failed: $e')));
+    }
   }
 
   Future<void> _handleSubmit() async {
@@ -241,7 +294,6 @@ class _AuthScreenState extends State<AuthScreen> {
               ? identifier
               : '+234${identifier.startsWith('0') ? identifier.substring(1) : identifier}';
 
-          // Check if phone already used
           final existing = await _authService.checkExistingUser(
             phone: formattedPhone,
           );
@@ -280,7 +332,6 @@ class _AuthScreenState extends State<AuthScreen> {
             },
           );
         } else {
-          // Verify OTP
           final userCred = await _authService.signInWithOTP(
             verificationId: _verificationId!,
             smsCode: _otpController.text.trim(),
@@ -308,7 +359,6 @@ class _AuthScreenState extends State<AuthScreen> {
           }
         }
       } else {
-        // Email Authentication flow
         final password = _passwordController.text.trim();
         if (password.length < 6) {
           setState(() => _isLoading = false);
@@ -320,7 +370,6 @@ class _AuthScreenState extends State<AuthScreen> {
           return;
         }
 
-        // Check if email already used
         final existing = await _authService.checkExistingUser(
           email: identifier,
         );
