@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/ogafix_models.dart';
+import 'admin_support_hub_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -51,7 +52,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('FindAPro Admin Dashboard')),
+      backgroundColor: const Color(0xFF121212),
+      appBar: AppBar(
+        title: const Text(
+          'FindAPro Admin Dashboard',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: const Color(0xFF1E1E1E),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -73,38 +82,45 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             const SizedBox(height: 16),
             TextField(
               controller: _categoryNameController,
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 labelText: 'Category Name (e.g. Solar Installation)',
+                labelStyle: const TextStyle(color: Colors.grey),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: const Color(0xFF1E1E1E),
               ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _categoryDescController,
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 labelText: 'Short Description',
+                labelStyle: const TextStyle(color: Colors.grey),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: const Color(0xFF1E1E1E),
               ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _servicesController,
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 labelText: 'Specific Services (comma separated)',
+                labelStyle: const TextStyle(color: Colors.grey),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: const Color(0xFF1E1E1E),
                 helperText: 'e.g. Panel Setup, Battery Inverter, Maintenance',
+                helperStyle: const TextStyle(color: Colors.grey),
               ),
             ),
             const SizedBox(height: 16),
@@ -121,6 +137,30 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                 ),
                 child: const Text('Publish New Category to App'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AdminSupportHubScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.support_agent, color: Colors.white),
+                label: const Text('Open Support Ticket Resolution Hub'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00331A),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 32),
@@ -171,7 +211,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             const SizedBox(height: 24),
             const Text(
               'Pending Professional Verifications',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(height: 12),
             ListView.builder(
@@ -185,6 +229,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ];
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
+                  color: const Color(0xFF1E1E1E),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: ListTile(
                     leading: const CircleAvatar(
                       backgroundColor: Color(0xFF008751),
@@ -192,10 +240,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                     title: Text(
                       names[index],
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                     subtitle: const Text(
                       'Submitted NIN & Certificate • Level 2 Verification',
+                      style: TextStyle(color: Colors.grey),
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -244,9 +296,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   ) {
     return Card(
       elevation: 0,
+      color: const Color(0xFF1E1E1E),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
+        side: BorderSide(color: Colors.grey.shade800),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -257,7 +310,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             const SizedBox(height: 12),
             Text(
               value,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
