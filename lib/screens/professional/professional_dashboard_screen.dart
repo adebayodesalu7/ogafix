@@ -7,6 +7,7 @@ import '../../models/user_profile_model.dart';
 import '../chat/chats_list_screen.dart';
 import '../customer/support_screen.dart';
 import '../profile/user_profile_screen.dart';
+import 'artisan_loans_screen.dart';
 import 'business_analytics_screen.dart';
 import 'business_expenses_screen.dart';
 import 'customers_history_screen.dart';
@@ -205,6 +206,13 @@ class _ProfessionalDashboardScreenState
                     builder: (context) => const BusinessExpensesScreen(),
                   ),
                 );
+              } else if (val == 'loans') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ArtisanLoansScreen(),
+                  ),
+                );
               } else if (val == 'customers') {
                 Navigator.push(
                   context,
@@ -251,6 +259,10 @@ class _ProfessionalDashboardScreenState
               const PopupMenuItem(
                 value: 'expenses',
                 child: Text('Business Expenses Tracker'),
+              ),
+              const PopupMenuItem(
+                value: 'loans',
+                child: Text('Artisan Micro-Loans & Financing'),
               ),
               const PopupMenuItem(
                 value: 'customers',
