@@ -26,6 +26,10 @@ class _AdvancedFiltersScreenState extends State<AdvancedFiltersScreen> {
         ),
         backgroundColor: const Color(0xFF1E1E1E),
         iconTheme: const IconThemeData(color: Colors.white),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
