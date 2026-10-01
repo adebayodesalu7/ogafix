@@ -7,6 +7,11 @@ import '../../models/user_profile_model.dart';
 import '../chat/chats_list_screen.dart';
 import '../customer/support_screen.dart';
 import '../profile/user_profile_screen.dart';
+import 'business_analytics_screen.dart';
+import 'customers_history_screen.dart';
+import 'invoices_screen.dart';
+import 'professional_active_job_screen.dart';
+import 'professional_calendar_screen.dart';
 
 class ProfessionalDashboardScreen extends StatefulWidget {
   const ProfessionalDashboardScreen({super.key});
@@ -161,6 +166,34 @@ class _ProfessionalDashboardScreenState
                     );
                   }
                 }
+              } else if (val == 'calendar') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ProfessionalCalendarScreen(),
+                  ),
+                );
+              } else if (val == 'invoices') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const InvoicesScreen(),
+                  ),
+                );
+              } else if (val == 'customers') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CustomersHistoryScreen(),
+                  ),
+                );
+              } else if (val == 'analytics') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const BusinessAnalyticsScreen(),
+                  ),
+                );
               } else if (val == 'support') {
                 Navigator.push(
                   context,
@@ -174,6 +207,22 @@ class _ProfessionalDashboardScreenState
             },
             itemBuilder: (context) => [
               const PopupMenuItem(value: 'profile', child: Text('My Profile')),
+              const PopupMenuItem(
+                value: 'calendar',
+                child: Text('Calendar & Availability'),
+              ),
+              const PopupMenuItem(
+                value: 'invoices',
+                child: Text('Invoices & Billing'),
+              ),
+              const PopupMenuItem(
+                value: 'customers',
+                child: Text('Customer History & Notes'),
+              ),
+              const PopupMenuItem(
+                value: 'analytics',
+                child: Text('Business Analytics'),
+              ),
               const PopupMenuItem(
                 value: 'support',
                 child: Text('FindAPro Pro Support'),
@@ -193,7 +242,7 @@ class _ProfessionalDashboardScreenState
           : _currentIndex == 2
           ? _buildServiceDirectory()
           : _currentIndex == 3
-          ? _buildActiveJobs()
+          ? const ProfessionalActiveJobScreen()
           : _buildEarningsView(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
@@ -505,15 +554,6 @@ class _ProfessionalDashboardScreenState
           ),
         );
       },
-    );
-  }
-
-  Widget _buildActiveJobs() {
-    return const Center(
-      child: Text(
-        'No active appointments scheduled yet.',
-        style: TextStyle(color: Colors.grey),
-      ),
     );
   }
 
