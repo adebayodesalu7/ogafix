@@ -286,45 +286,45 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                 onChanged: (val) =>
                     setState(() => selectedLga = val ?? selectedLga),
               ),
+              const SizedBox(height: 16),
+              const Text(
+                'Profession / Trade',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white70,
+                ),
+              ),
+              const SizedBox(height: 6),
+              DropdownButtonFormField<String>(
+                value: selectedProfession,
+                dropdownColor: const Color(0xFF1E1E1E),
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade800),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade800),
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFF1E1E1E),
+                ),
+                items: professions.map((prof) {
+                  return DropdownMenuItem(
+                    value: prof,
+                    child: Text(
+                      prof,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (val) => setState(
+                  () => selectedProfession = val ?? selectedProfession,
+                ),
+              ),
               if (widget.role == 'professional') ...[
-                const SizedBox(height: 16),
-                const Text(
-                  'Profession / Trade',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white70,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                DropdownButtonFormField<String>(
-                  value: selectedProfession,
-                  dropdownColor: const Color(0xFF1E1E1E),
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade800),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade800),
-                    ),
-                    filled: true,
-                    fillColor: const Color(0xFF1E1E1E),
-                  ),
-                  items: professions.map((prof) {
-                    return DropdownMenuItem(
-                      value: prof,
-                      child: Text(
-                        prof,
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (val) => setState(
-                    () => selectedProfession = val ?? selectedProfession,
-                  ),
-                ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _expController,
@@ -344,7 +344,9 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                     filled: true,
                     fillColor: const Color(0xFF1E1E1E),
                   ),
-                  validator: (val) => val == null || int.tryParse(val) == null
+                  validator: (val) =>
+                      widget.role == 'professional' &&
+                          (val == null || int.tryParse(val) == null)
                       ? 'Enter years of experience'
                       : null,
                 ),
@@ -419,12 +421,12 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                         state: LagosData.state,
                         lga: selectedLga,
                         stateOfOrigin: _stateOfOriginController.text.trim(),
-                        yearsOfExperience: widget.role == 'professional'
+                        yearsOfExperience:
+                            widget.role == 'professional' &&
+                                _expController.text.isNotEmpty
                             ? int.parse(_expController.text.trim())
                             : 0,
-                        profession: widget.role == 'professional'
-                            ? selectedProfession
-                            : 'Customer',
+                        profession: selectedProfession,
                         ninNumber: _ninController.text.trim(),
                         description: _descController.text.trim(),
                         profileImageUrl: base64Avatar,
