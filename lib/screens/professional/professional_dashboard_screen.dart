@@ -8,10 +8,13 @@ import '../chat/chats_list_screen.dart';
 import '../customer/support_screen.dart';
 import '../profile/user_profile_screen.dart';
 import 'business_analytics_screen.dart';
+import 'business_expenses_screen.dart';
 import 'customers_history_screen.dart';
 import 'invoices_screen.dart';
+import 'job_assignment_screen.dart';
 import 'professional_active_job_screen.dart';
 import 'professional_calendar_screen.dart';
+import 'team_management_screen.dart';
 
 class ProfessionalDashboardScreen extends StatefulWidget {
   const ProfessionalDashboardScreen({super.key});
@@ -173,11 +176,32 @@ class _ProfessionalDashboardScreenState
                     builder: (context) => const ProfessionalCalendarScreen(),
                   ),
                 );
+              } else if (val == 'team') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TeamManagementScreen(),
+                  ),
+                );
+              } else if (val == 'assign') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const JobAssignmentScreen(),
+                  ),
+                );
               } else if (val == 'invoices') {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const InvoicesScreen(),
+                  ),
+                );
+              } else if (val == 'expenses') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const BusinessExpensesScreen(),
                   ),
                 );
               } else if (val == 'customers') {
@@ -212,12 +236,24 @@ class _ProfessionalDashboardScreenState
                 child: Text('Calendar & Availability'),
               ),
               const PopupMenuItem(
+                value: 'team',
+                child: Text('Team & Workers Management'),
+              ),
+              const PopupMenuItem(
+                value: 'assign',
+                child: Text('Job Assignment & Scheduling'),
+              ),
+              const PopupMenuItem(
                 value: 'invoices',
                 child: Text('Invoices & Billing'),
               ),
               const PopupMenuItem(
+                value: 'expenses',
+                child: Text('Business Expenses Tracker'),
+              ),
+              const PopupMenuItem(
                 value: 'customers',
-                child: Text('Customer History & Notes'),
+                child: Text('Customer History & CRM'),
               ),
               const PopupMenuItem(
                 value: 'analytics',
