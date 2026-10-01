@@ -19,10 +19,14 @@ class _ReviewScreenState extends State<ReviewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        title: Text('Rate & Review ${widget.professionalName}'),
-        backgroundColor: const Color(0xFF008751),
-        foregroundColor: Colors.white,
+        title: Text(
+          'Rate & Review ${widget.professionalName}',
+          style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: const Color(0xFF1E1E1E),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -31,52 +35,78 @@ class _ReviewScreenState extends State<ReviewScreen> {
           children: [
             const Text(
               'How was the service?',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             const Text(
-              'Your honest review helps other Lagos customers hire trusted pros.',
+              'Your verified review helps other Lagos customers hire trusted pros.',
               style: TextStyle(color: Colors.grey, fontSize: 13),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
-            _buildRatingSlider(
-              'Quality of Work',
-              _qualityRating,
-              (val) => setState(() => _qualityRating = val),
-            ),
-            _buildRatingSlider(
-              'Communication',
-              _communicationRating,
-              (val) => setState(() => _communicationRating = val),
-            ),
-            _buildRatingSlider(
-              'Punctuality',
-              _punctualityRating,
-              (val) => setState(() => _punctualityRating = val),
-            ),
-            _buildRatingSlider(
-              'Value for Money',
-              _valueRating,
-              (val) => setState(() => _valueRating = val),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E1E),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade800),
+              ),
+              child: Column(
+                children: [
+                  _buildRatingSlider(
+                    'Quality of Work',
+                    _qualityRating,
+                    (val) => setState(() => _qualityRating = val),
+                  ),
+                  _buildRatingSlider(
+                    'Communication',
+                    _communicationRating,
+                    (val) => setState(() => _communicationRating = val),
+                  ),
+                  _buildRatingSlider(
+                    'Punctuality',
+                    _punctualityRating,
+                    (val) => setState(() => _punctualityRating = val),
+                  ),
+                  _buildRatingSlider(
+                    'Value for Money',
+                    _valueRating,
+                    (val) => setState(() => _valueRating = val),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
             TextField(
               controller: _reviewController,
               maxLines: 4,
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                labelText: 'Write your review...',
+                labelText: 'Write your detailed review...',
+                labelStyle: const TextStyle(color: Colors.grey),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade800),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade800),
                 ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: const Color(0xFF1E1E1E),
               ),
             ),
             const SizedBox(height: 20),
             SwitchListTile(
-              title: const Text('Would you rehire this professional?'),
+              title: const Text(
+                'Would you rehire this professional?',
+                style: TextStyle(color: Colors.white),
+              ),
               value: _rehire,
               activeColor: const Color(0xFF008751),
               onChanged: (val) => setState(() => _rehire = val),
@@ -86,7 +116,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Review submitted successfully! Thank you.'),
+                    content: Text(
+                      'Verified review submitted successfully! Thank you.',
+                    ),
                   ),
                 );
                 Navigator.pop(context);
@@ -123,14 +155,23 @@ class _ReviewScreenState extends State<ReviewScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
               Row(
                 children: [
                   const Icon(Icons.star, color: Colors.amber, size: 16),
                   const SizedBox(width: 4),
                   Text(
                     rating.toStringAsFixed(1),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ],
               ),
@@ -142,6 +183,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
             max: 5.0,
             divisions: 4,
             activeColor: const Color(0xFF008751),
+            inactiveColor: Colors.grey.shade800,
             onChanged: onChanged,
           ),
         ],

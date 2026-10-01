@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/ogafix_models.dart';
+import '../../services/notification_service.dart';
 import '../../utils/lagos_lgas.dart';
 
 class PostJobScreen extends StatefulWidget {
@@ -13,21 +14,56 @@ class PostJobScreen extends StatefulWidget {
 
 class _PostJobScreenState extends State<PostJobScreen> {
   Category? selectedCategory;
-  final List<String> selectedSpecificServices = [];
+  List<String> selectedSpecificServices = [];
   String selectedState = LagosData.state;
   String selectedLga = LagosData.localGovernments[0];
-  String locationStamp = 'Stamped: 6.4527° N, 3.3883° E (GPS Verified)';
+  String locationStamp = 'Lekki Phase 1, Lagos';
 
   final TextEditingController _descController = TextEditingController();
   final TextEditingController _budgetController = TextEditingController();
   String _selectedUrgency = 'Normal (Today/Tomorrow)';
+  DateTime? _scheduledDateTime;
+
+  Future<void> _pickDateTime(BuildContext context) async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().add(const Duration(days: 1)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 90)),
+    );
+    if (date != null) {
+      final time = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+      );
+      if (time != null) {
+        setState(() {
+          _scheduledDateTime = DateTime(
+            date.year,
+            date.month,
+            date.day,
+            time.hour,
+            time.minute,
+          );
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Post Job & Request Quote')),
+      backgroundColor: const Color(0xFF121212),
+      appBar: AppBar(
+        title: const Text(
+          'Post a Job Request',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: const Color(0xFF1E1E1E),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -42,18 +78,25 @@ class _PostJobScreenState extends State<PostJobScreen> {
             const SizedBox(height: 8),
             DropdownButtonFormField<Category>(
               value: selectedCategory,
+              dropdownColor: const Color(0xFF1E1E1E),
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
                 filled: true,
-                fillColor: Colors.white,
-              ),
-              hint: const Text(
-                'Choose a category (e.g., Plumbing, Electrical)',
+                fillColor: const Color(0xFF1E1E1E),
+                hintText: 'Choose category...',
+                hintStyle: const TextStyle(color: Colors.grey),
               ),
               items: MockData.categories.map((cat) {
-                return DropdownMenuItem(value: cat, child: Text(cat.name));
+                return DropdownMenuItem(
+                  value: cat,
+                  child: Text(
+                    cat.name,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                );
               }).toList(),
               onChanged: (val) {
                 setState(() {
@@ -65,28 +108,29 @@ class _PostJobScreenState extends State<PostJobScreen> {
             if (selectedCategory != null) ...[
               const SizedBox(height: 16),
               const Text(
-                'Select Specific Professional Services (Multiple Selection)',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                '2. Specific Services Needed',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF008751),
+                ),
               ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
-                runSpacing: 4,
+                runSpacing: 8,
                 children: selectedCategory!.specificServices.map((service) {
                   final isSelected = selectedSpecificServices.contains(service);
                   return FilterChip(
-                    label: Text(
-                      service,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isSelected ? Colors.white : Colors.black87,
-                      ),
-                    ),
+                    label: Text(service),
                     selected: isSelected,
                     selectedColor: const Color(0xFF008751),
-                    backgroundColor: Colors.grey.shade200,
                     checkmarkColor: Colors.white,
-                    onSelected: (bool selected) {
+                    labelStyle: TextStyle(
+                      color: isSelected ? Colors.white : Colors.white70,
+                    ),
+                    backgroundColor: const Color(0xFF1E1E1E),
+                    onSelected: (selected) {
                       setState(() {
                         if (selected) {
                           selectedSpecificServices.add(service);
@@ -101,117 +145,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
             ],
             const SizedBox(height: 24),
             const Text(
-              '2. Location & Lagos LGA',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF008751),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  flex: 1,
-                  child: DropdownButtonFormField<String>(
-                    value: selectedState,
-                    isExpanded: true,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 12,
-                      ),
-                    ),
-                    items: [LagosData.state].map((st) {
-                      return DropdownMenuItem(
-                        value: st,
-                        child: Text(
-                          st,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (val) {},
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 2,
-                  child: DropdownButtonFormField<String>(
-                    value: selectedLga,
-                    isExpanded: true,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 12,
-                      ),
-                    ),
-                    items: LagosData.localGovernments.map((lga) {
-                      return DropdownMenuItem(
-                        value: lga,
-                        child: Text(
-                          lga,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) {
-                        setState(() {
-                          selectedLga = val;
-                          locationStamp =
-                              'Stamped: GPS Verified in $val, Lagos State';
-                        });
-                      }
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.green.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green.shade200),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.my_location,
-                    color: Color(0xFF008751),
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      locationStamp,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF008751),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              '3. Problem Description & Media',
+              '3. Problem Description & Appointment Schedule',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -222,34 +156,52 @@ class _PostJobScreenState extends State<PostJobScreen> {
             TextField(
               controller: _descController,
               maxLines: 4,
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
                 hintText: 'Describe what needs fixing in detail...',
+                hintStyle: const TextStyle(color: Colors.grey),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: const Color(0xFF1E1E1E),
               ),
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.camera_alt, color: Color(0xFF008751)),
-                  label: const Text('Add Photo'),
+            InkWell(
+              onTap: () => _pickDateTime(context),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1E1E),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade800),
                 ),
-                const SizedBox(width: 12),
-                OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.mic, color: Color(0xFF008751)),
-                  label: const Text('Voice Note'),
+                child: Row(
+                  children: [
+                    const Icon(Icons.calendar_today, color: Color(0xFF008751)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _scheduledDateTime == null
+                            ? 'Schedule Appointment Date & Time (Optional)'
+                            : 'Scheduled: ${_scheduledDateTime.toString().substring(0, 16)}',
+                        style: TextStyle(
+                          color: _scheduledDateTime == null
+                              ? Colors.grey
+                              : Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right, color: Colors.grey),
+                  ],
                 ),
-              ],
+              ),
             ),
             const SizedBox(height: 24),
             const Text(
-              '4. Budget & Timing (Naira Currency)',
+              '4. Budget & Urgency (Naira Currency)',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -262,25 +214,29 @@ class _PostJobScreenState extends State<PostJobScreen> {
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                hintText: 'e.g. 150,000.00 (Thousands / Millions)',
+                hintText: 'e.g. 15,000.00',
+                hintStyle: const TextStyle(color: Colors.grey),
                 prefixText: '₦ ',
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: const Color(0xFF1E1E1E),
               ),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               value: _selectedUrgency,
+              dropdownColor: const Color(0xFF1E1E1E),
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: const Color(0xFF1E1E1E),
               ),
               items:
                   [
@@ -300,6 +256,13 @@ class _PostJobScreenState extends State<PostJobScreen> {
                 onPressed: () async {
                   if (selectedCategory == null ||
                       selectedSpecificServices.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Please select a category and at least one specific service.',
+                        ),
+                      ),
+                    );
                     return;
                   }
 
@@ -325,19 +288,36 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   await FirebaseFirestore.instance
                       .collection('jobs')
                       .add(jobPost.toMap());
+
+                  // Broadcast push notification alert to professionals
+                  await NotificationService().sendNotification(
+                    userId: 'all_professionals',
+                    title: 'New ${selectedCategory!.name} Job Posted!',
+                    body: 'New request in $selectedLga • Budget: ₦$budget',
+                  );
+
                   if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Job posted successfully and broadcasted to professionals!',
+                      ),
+                    ),
+                  );
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF008751),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  textStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Broadcast Job to Local Professionals'),
+                child: const Text(
+                  'Post Job & Broadcast to Artisans',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           ],
