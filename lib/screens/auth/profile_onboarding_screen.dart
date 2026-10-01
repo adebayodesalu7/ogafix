@@ -50,14 +50,14 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
   final List<String> professions = [
     'Plumbing',
     'Electrical',
-    'AC & Refrigeration',
-    'Generator Repair',
+    'AC/Refrigeration',
+    'Generator repair',
     'Cleaning',
     'Carpentry',
     'Painting',
-    'Appliance Repair',
-    'Web Designer',
-    'App Developer',
+    'Appliance repair',
+    'Auto mechanics',
+    'Tailoring',
   ];
 
   @override
@@ -83,9 +83,10 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
         title: const Text('Complete Your Profile'),
-        backgroundColor: const Color(0xFF008751),
+        backgroundColor: const Color(0xFF1E1E1E),
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -151,70 +152,98 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              // Optional NIN Number Field (No blocking validation)
+              // Optional NIN Number Field
               TextFormField(
                 controller: _ninController,
                 maxLength: 11,
                 keyboardType: TextInputType.number,
+                style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   labelText: 'NIN Number (Optional)',
+                  labelStyle: const TextStyle(color: Colors.grey),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade800),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade800),
                   ),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: const Color(0xFF1E1E1E),
                   prefixIcon: const Icon(
                     Icons.verified_user,
                     color: Color(0xFF008751),
                   ),
                 ),
-                validator: (val) => null, // Optional, never blocks
+                validator: (val) => null,
               ),
               const SizedBox(height: 12),
-              // Full Name Field (Manual input)
+              // Full Name Field
               TextFormField(
                 controller: _fullNameController,
+                style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   labelText: 'Full Name',
+                  labelStyle: const TextStyle(color: Colors.grey),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade800),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade800),
                   ),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: const Color(0xFF1E1E1E),
                 ),
                 validator: (val) => val == null || val.isEmpty
                     ? 'Please enter full name'
                     : null,
               ),
               const SizedBox(height: 16),
-              // Email Field (Always collected)
+              // Email Field
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
+                style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   labelText: 'Email Address',
+                  labelStyle: const TextStyle(color: Colors.grey),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade800),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade800),
                   ),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: const Color(0xFF1E1E1E),
                 ),
                 validator: (val) => val == null || !val.contains('@')
                     ? 'Enter valid email address'
                     : null,
               ),
               const SizedBox(height: 16),
-              // Phone Field (Always collected)
+              // Phone Field
               TextFormField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
+                style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   labelText: 'Phone Number',
+                  labelStyle: const TextStyle(color: Colors.grey),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade800),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade800),
                   ),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: const Color(0xFF1E1E1E),
                 ),
                 validator: (val) => val == null || val.length < 10
                     ? 'Enter valid phone number'
@@ -223,20 +252,36 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
               const SizedBox(height: 16),
               const Text(
                 'Lagos Local Government Area (LGA)',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white70,
+                ),
               ),
               const SizedBox(height: 6),
               DropdownButtonFormField<String>(
                 value: selectedLga,
+                dropdownColor: const Color(0xFF1E1E1E),
+                style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade800),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade800),
                   ),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: const Color(0xFF1E1E1E),
                 ),
                 items: LagosData.localGovernments.map((lga) {
-                  return DropdownMenuItem(value: lga, child: Text(lga));
+                  return DropdownMenuItem(
+                    value: lga,
+                    child: Text(
+                      lga,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  );
                 }).toList(),
                 onChanged: (val) =>
                     setState(() => selectedLga = val ?? selectedLga),
@@ -245,20 +290,36 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                 const SizedBox(height: 16),
                 const Text(
                   'Profession / Trade',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white70,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
                   value: selectedProfession,
+                  dropdownColor: const Color(0xFF1E1E1E),
+                  style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade800),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade800),
                     ),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: const Color(0xFF1E1E1E),
                   ),
                   items: professions.map((prof) {
-                    return DropdownMenuItem(value: prof, child: Text(prof));
+                    return DropdownMenuItem(
+                      value: prof,
+                      child: Text(
+                        prof,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    );
                   }).toList(),
                   onChanged: (val) => setState(
                     () => selectedProfession = val ?? selectedProfession,
@@ -268,13 +329,20 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                 TextFormField(
                   controller: _expController,
                   keyboardType: TextInputType.number,
+                  style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     labelText: 'Years of Experience',
+                    labelStyle: const TextStyle(color: Colors.grey),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade800),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade800),
                     ),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: const Color(0xFF1E1E1E),
                   ),
                   validator: (val) => val == null || int.tryParse(val) == null
                       ? 'Enter years of experience'
@@ -284,13 +352,20 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _stateOfOriginController,
+                style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   labelText: 'State of Origin',
+                  labelStyle: const TextStyle(color: Colors.grey),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade800),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade800),
                   ),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: const Color(0xFF1E1E1E),
                 ),
                 validator: (val) =>
                     val == null || val.isEmpty ? 'Required' : null,
@@ -300,15 +375,23 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                 controller: _descController,
                 maxLines: 5,
                 maxLength: 1000,
+                style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   labelText: 'Professional Description & Experience (Bio)',
+                  labelStyle: const TextStyle(color: Colors.grey),
                   alignLabelWithHint: true,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade800),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade800),
                   ),
                   filled: true,
-                  fillColor: Colors.white,
-                  helperText: 'Describe your background and technologies used (max 1000 words).',
+                  fillColor: const Color(0xFF1E1E1E),
+                  helperText: 'Describe your background and experience (max 1000 words).',
+                  helperStyle: const TextStyle(color: Colors.grey),
                 ),
                 validator: (val) => val == null || val.length < 20
                     ? 'Please provide at least 20 characters'
@@ -349,7 +432,7 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                         verificationLevel:
                             _ninController.text.trim().length == 11 ? 3 : 2,
                         emailVerified: true,
-                        phoneVerified: true,
+                        phoneVerified: false,
                         ninVerified: _ninController.text.trim().length == 11,
                       );
 
@@ -391,7 +474,7 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 child: _isLoading
