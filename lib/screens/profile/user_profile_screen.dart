@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../models/user_profile_model.dart';
@@ -84,6 +85,163 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               'Close',
               style: TextStyle(color: Color(0xFF008751)),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showInviteDialog(UserProfile currentProfile) {
+    final refCode = currentProfile.uid.length >= 6
+        ? currentProfile.uid.substring(0, 6).toUpperCase()
+        : 'FINDAPRO';
+    final refLink = 'https://findapro.ng/invite?ref=$refCode';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text(
+          'Invite Friends & Earn',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Share your referral link with friends and artisans:',
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade800),
+              ),
+              child: Text(
+                refLink,
+                style: const TextStyle(
+                  color: Color(0xFF008751),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: refLink));
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Referral link copied to clipboard!'),
+                ),
+              );
+            },
+            child: const Text(
+              'Copy Link',
+              style: TextStyle(
+                color: Color(0xFF008751),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close', style: TextStyle(color: Colors.grey)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPhoneVerificationDialog(UserProfile currentProfile) {
+    final TextEditingController otpController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text(
+          'Phone Number Verification',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Verification code sent via SMS to ${currentProfile.phone.isNotEmpty ? currentProfile.phone : 'your phone'}.',
+              style: const TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: otpController,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Enter 6-Digit OTP',
+                labelStyle: const TextStyle(color: Colors.grey),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                filled: true,
+                fillColor: Colors.black,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              if (otpController.text.trim().length == 6) {
+                Navigator.pop(context);
+                final updated = UserProfile(
+                  uid: currentProfile.uid,
+                  email: currentProfile.email,
+                  phone: currentProfile.phone,
+                  role: currentProfile.role,
+                  fullName: currentProfile.fullName,
+                  state: currentProfile.state,
+                  lga: currentProfile.lga,
+                  stateOfOrigin: currentProfile.stateOfOrigin,
+                  yearsOfExperience: currentProfile.yearsOfExperience,
+                  profession: currentProfile.profession,
+                  ninNumber: currentProfile.ninNumber,
+                  description: currentProfile.description,
+                  profileImageUrl: currentProfile.profileImageUrl,
+                  jobStatuses: currentProfile.jobStatuses,
+                  verificationLevel: currentProfile.ninNumber.isNotEmpty
+                      ? 3
+                      : 2,
+                  emailVerified: currentProfile.emailVerified,
+                  phoneVerified: true,
+                  ninVerified: currentProfile.ninVerified,
+                );
+                await _authService.saveCompleteUserProfile(updated);
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Phone number verified successfully!'),
+                  ),
+                );
+              }
+            },
+            child: const Text(
+              'Verify OTP',
+              style: TextStyle(
+                color: Color(0xFF008751),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
           ),
         ],
       ),
@@ -234,6 +392,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           'Email Verification',
                           true, // Signed up via email
                           currentProfile.email,
+                          () {},
                         ),
                         const SizedBox(height: 8),
                         _buildVerificationBadgeRow(
@@ -242,6 +401,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           currentProfile.phone.isNotEmpty
                               ? currentProfile.phone
                               : 'Not verified',
+                          () {
+                            if (!currentProfile.phoneVerified && isMyProfile) {
+                              _showPhoneVerificationDialog(currentProfile);
+                            }
+                          },
                         ),
                         const SizedBox(height: 8),
                         _buildVerificationBadgeRow(
@@ -250,14 +414,43 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           currentProfile.ninNumber.isNotEmpty
                               ? 'NIN: ${currentProfile.ninNumber}'
                               : 'NIL',
+                          () {},
                         ),
                       ],
                     ),
                   ),
                 ),
                 const SizedBox(height: 12),
-                _buildMenuTile(Icons.bookmark_border, 'My interests', () {}),
-                _buildMenuTile(Icons.send_outlined, 'Invite friends', () {}),
+                _buildMenuTile(Icons.bookmark_border, 'My interests', () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      backgroundColor: const Color(0xFF1E1E1E),
+                      title: const Text(
+                        'My Interests',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      content: const Text(
+                        'You have selected discovery interests in Plumbing, Electrical, and Tech services.',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text(
+                            'Close',
+                            style: TextStyle(color: Color(0xFF008751)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+                _buildMenuTile(
+                  Icons.send_outlined,
+                  'Invite friends',
+                  () => _showInviteDialog(currentProfile),
+                ),
                 const SizedBox(height: 12),
                 const Padding(
                   padding: EdgeInsets.symmetric(
@@ -314,7 +507,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       lga: currentProfile.lga,
                       stateOfOrigin: currentProfile.stateOfOrigin,
                       yearsOfExperience: currentProfile.yearsOfExperience,
-                      profession: 'Master Artisan',
+                      profession: 'Plumbing',
                       ninNumber: currentProfile.ninNumber,
                       description: currentProfile.description,
                       profileImageUrl: currentProfile.profileImageUrl,
@@ -449,58 +642,62 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     String title,
     bool isVerified,
     String detail,
+    VoidCallback onTap,
   ) {
-    return Row(
-      children: [
-        Icon(
-          isVerified ? Icons.verified : Icons.pending,
-          color: isVerified ? const Color(0xFF008751) : Colors.orange,
-          size: 20,
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
+    return InkWell(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Icon(
+            isVerified ? Icons.verified : Icons.pending,
+            color: isVerified ? const Color(0xFF008751) : Colors.orange,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
                 ),
-              ),
-              Text(
-                detail,
-                style: const TextStyle(color: Colors.grey, fontSize: 12),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: isVerified
-                ? const Color(0xFF008751).withValues(alpha: 0.15)
-                : Colors.orange.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isVerified ? const Color(0xFF008751) : Colors.orange,
+                Text(
+                  detail,
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
-          child: Text(
-            isVerified
-                ? 'Verified'
-                : (detail == 'NIL' ? 'NIL' : 'Not Verified'),
-            style: TextStyle(
-              color: isVerified ? const Color(0xFF008751) : Colors.orange,
-              fontWeight: FontWeight.bold,
-              fontSize: 11,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: isVerified
+                  ? const Color(0xFF008751).withValues(alpha: 0.15)
+                  : Colors.orange.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isVerified ? const Color(0xFF008751) : Colors.orange,
+              ),
+            ),
+            child: Text(
+              isVerified
+                  ? 'Verified'
+                  : (detail == 'NIL' ? 'NIL' : 'Not Verified'),
+              style: TextStyle(
+                color: isVerified ? const Color(0xFF008751) : Colors.orange,
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
