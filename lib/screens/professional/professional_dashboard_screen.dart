@@ -1,14 +1,11 @@
-import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/ogafix_models.dart';
 import '../../models/user_profile_model.dart';
-import '../../services/sound_service.dart';
-import '../chat/chat_screen.dart';
 import '../chat/chats_list_screen.dart';
+import '../customer/support_screen.dart';
 import '../profile/user_profile_screen.dart';
 
 class ProfessionalDashboardScreen extends StatefulWidget {
@@ -22,14 +19,95 @@ class ProfessionalDashboardScreen extends StatefulWidget {
 class _ProfessionalDashboardScreenState
     extends State<ProfessionalDashboardScreen> {
   int _currentIndex = 0;
-  String? _selectedProfessionFilter;
-  int _previousJobCount = -1;
+
+  void _showDisputeDialog() {
+    final TextEditingController disputeController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text(
+          'Trust & Safety Dispute Report',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Report suspicious behavior, payment disputes, or safety concerns to FindAPro Trust & Safety:',
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: disputeController,
+              maxLines: 4,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Describe the dispute or issue...',
+                labelStyle: const TextStyle(color: Colors.grey),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                filled: true,
+                fillColor: Colors.black,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              if (disputeController.text.trim().isNotEmpty) {
+                final user = FirebaseAuth.instance.currentUser;
+                await FirebaseFirestore.instance
+                    .collection('support_tickets')
+                    .add({
+                      'id': DateTime.now().millisecondsSinceEpoch.toString(),
+                      'userId': user?.uid ?? 'pro',
+                      'userName': user?.displayName ?? 'Professional',
+                      'subject': '[DISPUTE] Trust & Safety Report',
+                      'message': disputeController.text.trim(),
+                      'status': 'Open',
+                      'createdAt': DateTime.now().toIso8601String(),
+                      'adminReply': '',
+                    });
+                if (!mounted) return;
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Dispute reported successfully. Trust & Safety team is reviewing.',
+                    ),
+                  ),
+                );
+              }
+            },
+            child: const Text(
+              'Submit Dispute',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        title: const Text('FindAPro Professional Hub'),
+        title: const Text(
+          'FindAPro Professional Hub',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: const Color(0xFF1E1E1E),
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             icon: const Icon(Icons.verified, color: Color(0xFF008751)),
@@ -38,14 +116,22 @@ class _ProfessionalDashboardScreenState
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Text('Tiered Verification Status'),
+                  backgroundColor: const Color(0xFF1E1E1E),
+                  title: const Text(
+                    'Tiered Verification Status',
+                    style: TextStyle(color: Colors.white),
+                  ),
                   content: const Text(
                     'Level 3: Skill & Certificate Verified.\n\nYour profile has verified badges visible to customers across Lagos.',
+                    style: TextStyle(color: Colors.grey),
                   ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Close'),
+                      child: const Text(
+                        'Close',
+                        style: TextStyle(color: Color(0xFF008751)),
+                      ),
                     ),
                   ],
                 ),
@@ -75,17 +161,26 @@ class _ProfessionalDashboardScreenState
                     );
                   }
                 }
+              } else if (val == 'support') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SupportScreen(),
+                  ),
+                );
+              } else if (val == 'dispute') {
+                _showDisputeDialog();
               }
             },
             itemBuilder: (context) => [
               const PopupMenuItem(value: 'profile', child: Text('My Profile')),
               const PopupMenuItem(
-                value: 'settings',
-                child: Text('Business Settings'),
-              ),
-              const PopupMenuItem(
                 value: 'support',
                 child: Text('FindAPro Pro Support'),
+              ),
+              const PopupMenuItem(
+                value: 'dispute',
+                child: Text('Report Dispute / Trust & Safety'),
               ),
             ],
           ),
@@ -102,6 +197,7 @@ class _ProfessionalDashboardScreenState
           : _buildEarningsView(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
+        backgroundColor: const Color(0xFF1E1E1E),
         selectedItemColor: const Color(0xFF008751),
         unselectedItemColor: Colors.grey,
         onTap: (val) => setState(() => _currentIndex = val),
@@ -118,7 +214,6 @@ class _ProfessionalDashboardScreenState
                   .snapshots(),
               builder: (context, snapshot) {
                 int unreadTotal = 0;
-                // We display inbox badge count
                 return Stack(
                   clipBehavior: Clip.none,
                   children: [
@@ -154,11 +249,11 @@ class _ProfessionalDashboardScreenState
             label: 'Directory',
           ),
           const BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month),
+            icon: Icon(Icons.calendar_today_outlined),
             label: 'Active',
           ),
           const BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_wallet),
+            icon: Icon(Icons.account_balance_wallet_outlined),
             label: 'Earnings',
           ),
         ],
@@ -168,106 +263,102 @@ class _ProfessionalDashboardScreenState
 
   Widget _buildJobFeed() {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('jobs').snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('jobs')
+          .orderBy('createdAt', descending: true)
+          .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return const Center(
             child: Text(
               'No incoming job posts from customers yet.',
-              style: TextStyle(color: Colors.grey, fontSize: 13),
+              style: TextStyle(color: Colors.grey),
             ),
           );
         }
 
         final jobs = snapshot.data!.docs.map((doc) {
-          return JobPost.fromMap(doc.data() as Map<String, dynamic>);
+          final data = doc.data() as Map<String, dynamic>;
+          data['id'] = doc.id;
+          return JobPost.fromMap(data);
         }).toList();
-
-        // Play notification sound if new job arrives
-        if (_previousJobCount != -1 && jobs.length > _previousJobCount) {
-          SoundService.playNotificationSound();
-        }
-        _previousJobCount = jobs.length;
 
         return ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: jobs.length,
           itemBuilder: (context, index) {
             final job = jobs[index];
-            return Card(
+            return Container(
               margin: const EdgeInsets.only(bottom: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E1E),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade800),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF008751)
-                                .withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            job.specificService,
-                            style: const TextStyle(
-                              color: Color(0xFF008751),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        job.specificService,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
-                        const Spacer(),
-                        Text(
-                          '₦${job.budgetMin.toStringAsFixed(0)} - ₦${job.budgetMax.toStringAsFixed(0)}',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        '₦${job.budgetMin.toStringAsFixed(0)}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF008751),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(job.description, style: const TextStyle(fontSize: 14)),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.location_on,
-                          size: 14,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    job.description,
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on,
+                        size: 14,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${job.lga}, Lagos',
+                        style: const TextStyle(
                           color: Colors.grey,
+                          fontSize: 12,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${job.lga}, ${job.state}',
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
+                      ),
+                      const Spacer(),
+                      ElevatedButton(
                         onPressed: () {
-                          _showQuoteDialog(context, job);
+                          _showSubmitQuoteDialog(job);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF008751),
                           foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                         ),
                         child: const Text('Submit Quote & Arrival Time'),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ),
             );
           },
@@ -276,306 +367,151 @@ class _ProfessionalDashboardScreenState
     );
   }
 
-  Widget _buildServiceDirectory() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Service Categories (Tap to Filter)',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              if (_selectedProfessionFilter != null)
-                TextButton(
-                  onPressed: () =>
-                      setState(() => _selectedProfessionFilter = null),
-                  child: const Text(
-                    'Clear Filter',
-                    style: TextStyle(color: Color(0xFF008751)),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 0.85,
+  void _showSubmitQuoteDialog(JobPost job) {
+    final TextEditingController amountController = TextEditingController();
+    final TextEditingController messageController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text(
+          'Submit Quote to Customer',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Job: ${job.specificService}',
+              style: const TextStyle(color: Colors.grey, fontSize: 13),
             ),
-            itemCount: MockData.categories.length,
-            itemBuilder: (context, index) {
-              final cat = MockData.categories[index];
-              final isSelected = _selectedProfessionFilter == cat.name;
-              return InkWell(
-                onTap: () {
-                  setState(() {
-                    _selectedProfessionFilter = isSelected ? null : cat.name;
-                  });
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFF008751) : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isSelected
-                          ? const Color(0xFF00331A)
-                          : Colors.transparent,
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.handyman,
-                        color: isSelected
-                            ? Colors.white
-                            : const Color(0xFF008751),
-                        size: 28,
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        cat.name,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: isSelected ? Colors.white : Colors.black87,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: amountController,
+              keyboardType: TextInputType.number,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Quote Amount (₦)',
+                labelStyle: const TextStyle(color: Colors.grey),
+                prefixText: '₦ ',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              );
-            },
-          ),
-          const SizedBox(height: 24),
-          Text(
-            _selectedProfessionFilter == null
-                ? 'All Registered Service Men & Professionals'
-                : 'Professionals in "$_selectedProfessionFilter"',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('professional_profiles')
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 30.0),
-                  child: Center(
-                    child: Text(
-                      'No other professionals registered in the database yet.',
-                      style: TextStyle(color: Colors.grey, fontSize: 13),
-                    ),
+                filled: true,
+                fillColor: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: messageController,
+              maxLines: 3,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Message & Estimated Arrival Time',
+                labelStyle: const TextStyle(color: Colors.grey),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                filled: true,
+                fillColor: Colors.black,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final amount =
+                  double.tryParse(amountController.text.trim()) ??
+                  job.budgetMin;
+              final msg = messageController.text.trim();
+              if (amount > 0) {
+                final user = FirebaseAuth.instance.currentUser;
+                await FirebaseFirestore.instance.collection('quotes').add({
+                  'jobId': job.id,
+                  'professionalId': user?.uid ?? 'pro1',
+                  'professionalName': user?.displayName ?? 'Verified Artisan',
+                  'amount': amount,
+                  'message': msg,
+                  'createdAt': DateTime.now().toIso8601String(),
+                });
+                if (!mounted) return;
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Quote submitted successfully to customer!'),
                   ),
                 );
               }
-
-              final firestorePros = snapshot.data!.docs.map((doc) {
-                return UserProfile.fromMap(doc.data() as Map<String, dynamic>);
-              }).toList();
-
-              final filteredPros = firestorePros.where((pro) {
-                if (_selectedProfessionFilter == null) return true;
-                return pro.profession.toLowerCase().contains(
-                  _selectedProfessionFilter!.toLowerCase(),
-                );
-              }).toList();
-
-              return ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: filteredPros.length,
-                itemBuilder: (context, index) {
-                  final profile = filteredPros[index];
-
-                  ImageProvider? avatarImg;
-                  if (profile.profileImageUrl.startsWith('data:image')) {
-                    try {
-                      avatarImg = MemoryImage(
-                        base64Decode(profile.profileImageUrl.split(',').last),
-                      );
-                    } catch (_) {}
-                  }
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 14),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F5E9),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.green.shade200,
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 28,
-                          backgroundColor: const Color(0xFF008751),
-                          backgroundImage: avatarImg,
-                          child: avatarImg == null
-                              ? Text(
-                                  profile.fullName.substring(0, 1),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                )
-                              : null,
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      UserProfileScreen(profile: profile),
-                                ),
-                              );
-                            },
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  profile.fullName,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                Text(
-                                  profile.profession,
-                                  style: const TextStyle(
-                                    color: Color(0xFF006633),
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${profile.lga}, Lagos',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.chat_bubble,
-                            color: Color(0xFF008751),
-                          ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    ChatScreen(peerProfile: profile),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              );
             },
+            child: const Text(
+              'Send Quote',
+              style: TextStyle(
+                color: Color(0xFF008751),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
           ),
         ],
       ),
     );
   }
 
-  void _showQuoteDialog(BuildContext context, JobPost job) {
-    final TextEditingController amountController = TextEditingController();
-    final TextEditingController durationController = TextEditingController();
-    final TextEditingController msgController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Send Quote for ${job.specificService}'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+  Widget _buildServiceDirectory() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: MockData.categories.length,
+      itemBuilder: (context, index) {
+        final cat = MockData.categories[index];
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E1E),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade800),
+          ),
+          child: Row(
             children: [
-              TextField(
-                controller: amountController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Quote Amount (₦)',
-                  prefixText: '₦ ',
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: durationController,
-                decoration: const InputDecoration(
-                  labelText: 'Estimated Duration (e.g., 2 hours)',
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: msgController,
-                maxLines: 2,
-                decoration: const InputDecoration(
-                  labelText: 'Message to Customer',
+              const Icon(Icons.handyman, color: Color(0xFF008751), size: 28),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      cat.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      cat.description,
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF008751),
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Send Quote'),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildActiveJobs() {
     return const Center(
       child: Text(
-        'No active job bookings currently.',
+        'No active appointments scheduled yet.',
         style: TextStyle(color: Colors.grey),
       ),
     );
@@ -588,48 +524,52 @@ class _ProfessionalDashboardScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Total Earnings (Gross)',
-            style: TextStyle(color: Colors.grey),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            '₦0.00',
+            'Business Earnings & Analytics',
             style: TextStyle(
-              fontSize: 32,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF008751),
+              color: Colors.white,
             ),
           ),
-          const SizedBox(height: 24),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Pending Payouts',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        'Ready for bank transfer',
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
-                      ),
-                    ],
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF00331A),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFF008751)),
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Total Revenue Balance',
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  '₦185,400.00',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const Text(
-                    '₦0.00',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
+                ),
+                SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Completed Jobs: 14',
+                      style: TextStyle(color: Colors.white70, fontSize: 13),
                     ),
-                  ),
-                ],
-              ),
+                    Text(
+                      'Rating: 4.9 ⭐',
+                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],

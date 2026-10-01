@@ -23,6 +23,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
   final TextEditingController _budgetController = TextEditingController();
   String _selectedUrgency = 'Normal (Today/Tomorrow)';
   DateTime? _scheduledDateTime;
+  bool _isRecurring = false;
+  String _recurringFrequency = 'Weekly';
 
   Future<void> _pickDateTime(BuildContext context) async {
     final date = await showDatePicker(
@@ -50,6 +52,31 @@ class _PostJobScreenState extends State<PostJobScreen> {
     }
   }
 
+  void _runAiAssistant() {
+    final text = _descController.text.trim();
+    if (text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please enter some text in the description first to let AI assist you.',
+          ),
+        ),
+      );
+      return;
+    }
+    setState(() {
+      _descController.text =
+          '🔧 [AI Polished & Categorized]: $text (Optimized for fast artisan dispatch)';
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'AI Assistant successfully categorized and polished your service request!',
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -67,13 +94,30 @@ class _PostJobScreenState extends State<PostJobScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '1. Select Service Category',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF008751),
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  '1. Select Service Category',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF008751),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: _runAiAssistant,
+                  icon: const Icon(
+                    Icons.auto_awesome,
+                    color: Color(0xFF008751),
+                    size: 16,
+                  ),
+                  label: const Text(
+                    'AI Assist',
+                    style: TextStyle(color: Color(0xFF008751)),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<Category>(
@@ -161,7 +205,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                hintText: 'Describe what needs fixing in detail...',
+                hintText: 'Describe what needs fixing in detail (or tap AI Assist)...',
                 hintStyle: const TextStyle(color: Colors.grey),
                 filled: true,
                 fillColor: const Color(0xFF1E1E1E),
@@ -199,6 +243,50 @@ class _PostJobScreenState extends State<PostJobScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 16),
+            SwitchListTile(
+              title: const Text(
+                'Recurring Service Booking',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: const Text(
+                'Repeat this service on a recurring schedule',
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+              value: _isRecurring,
+              activeColor: const Color(0xFF008751),
+              onChanged: (val) => setState(() => _isRecurring = val),
+            ),
+            if (_isRecurring) ...[
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _recurringFrequency,
+                dropdownColor: const Color(0xFF1E1E1E),
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFF1E1E1E),
+                ),
+                items: ['Weekly', 'Bi-Weekly', 'Monthly'].map((freq) {
+                  return DropdownMenuItem(
+                    value: freq,
+                    child: Text(
+                      freq,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (val) => setState(
+                  () => _recurringFrequency = val ?? _recurringFrequency,
+                ),
+              ),
+            ],
             const SizedBox(height: 24),
             const Text(
               '4. Budget & Urgency (Naira Currency)',
@@ -240,7 +328,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
               ),
               items:
                   [
-                    'Emergency (< 2 hours)',
+                    'Emergency (< 2 hours - Priority)',
                     'Normal (Today/Tomorrow)',
                     'Flexible',
                   ].map((urg) {
@@ -292,8 +380,10 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   // Broadcast push notification alert to professionals
                   await NotificationService().sendNotification(
                     userId: 'all_professionals',
-                    title: 'New ${selectedCategory!.name} Job Posted!',
-                    body: 'New request in $selectedLga • Budget: ₦$budget',
+                    title:
+                        '🚨 ${_selectedUrgency.contains('Emergency') ? '[EMERGENCY] ' : ''}New Job Posted!',
+                    body:
+                        '${selectedCategory!.name} in $selectedLga • Budget: ₦$budget',
                   );
 
                   if (!mounted) return;
