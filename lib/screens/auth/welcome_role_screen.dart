@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../admin/admin_login_screen.dart';
 import 'auth_screen.dart';
 
 class WelcomeRoleScreen extends StatelessWidget {
@@ -161,6 +162,31 @@ class WelcomeRoleScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
+              Center(
+                child: TextButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AdminLoginScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(
+                    Icons.admin_panel_settings,
+                    color: Color(0xFF008751),
+                    size: 18,
+                  ),
+                  label: const Text(
+                    'Admin & Support CRM Portal',
+                    style: TextStyle(
+                      color: Color(0xFF008751),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
             ],
           ),
         ),
