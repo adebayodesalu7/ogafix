@@ -98,9 +98,14 @@ class _ChatScreenState extends State<ChatScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(isVideo ? 'Agora Video Call' : 'Agora Voice Call'),
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: Text(
+          isVideo ? 'Agora Video Call' : 'Agora Voice Call',
+          style: const TextStyle(color: Colors.white),
+        ),
         content: Text(
           'Connecting Agora RTC session with ${widget.peerProfile.fullName}...\n\n(Ready for Agora Temp Token).',
+          style: const TextStyle(color: Colors.grey),
         ),
         actions: [
           TextButton(
@@ -125,8 +130,9 @@ class _ChatScreenState extends State<ChatScreen> {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return Scaffold(
+      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF008751),
+        backgroundColor: const Color(0xFF1E1E1E),
         foregroundColor: Colors.white,
         title: StreamBuilder<DocumentSnapshot>(
           stream: FirebaseFirestore.instance
@@ -165,7 +171,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   CircleAvatar(
                     radius: 18,
-                    backgroundColor: Colors.white,
+                    backgroundColor: const Color(0xFF008751),
                     backgroundImage: peerAvatar,
                     child: peerAvatar == null
                         ? Text(
@@ -173,7 +179,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 ? peer.fullName.substring(0, 1)
                                 : 'U',
                             style: const TextStyle(
-                              color: Color(0xFF008751),
+                              color: Colors.white,
                               fontWeight: FontWeight.bold,
                             ),
                           )
@@ -186,7 +192,10 @@ class _ChatScreenState extends State<ChatScreen> {
                       children: [
                         Text(
                           peer.fullName,
-                          style: const TextStyle(fontSize: 16),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
@@ -246,7 +255,7 @@ class _ChatScreenState extends State<ChatScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 8),
-            color: Colors.green.shade50,
+            color: const Color(0xFF00331A),
             child: const Text(
               '🔒 Messages are end-to-end encrypted',
               style: TextStyle(
@@ -310,12 +319,14 @@ class _ChatScreenState extends State<ChatScreen> {
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: isMe ? const Color(0xFFE8F5E9) : Colors.white,
+                          color: isMe
+                              ? const Color(0xFF00331A)
+                              : const Color(0xFF1E1E1E),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: isMe
-                                ? Colors.green.shade200
-                                : Colors.grey.shade300,
+                                ? const Color(0xFF008751)
+                                : Colors.grey.shade800,
                           ),
                         ),
                         child: Column(
@@ -336,14 +347,17 @@ class _ChatScreenState extends State<ChatScreen> {
                               ),
                             Text(
                               msg.text,
-                              style: const TextStyle(fontSize: 15),
+                              style: const TextStyle(
+                                fontSize: 15,
+                                color: Colors.white,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               '${msg.timestamp.hour}:${msg.timestamp.minute.toString().padLeft(2, '0')}',
                               style: const TextStyle(
                                 fontSize: 10,
-                                color: Colors.grey,
+                                color: Colors.white70,
                               ),
                             ),
                           ],
@@ -358,7 +372,7 @@ class _ChatScreenState extends State<ChatScreen> {
           // Chat Input Bar
           Container(
             padding: const EdgeInsets.all(8),
-            color: Colors.white,
+            color: const Color(0xFF1E1E1E),
             child: Row(
               children: [
                 IconButton(
@@ -372,14 +386,16 @@ class _ChatScreenState extends State<ChatScreen> {
                 Expanded(
                   child: TextField(
                     controller: _msgController,
+                    style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       hintText: 'Type a message...',
+                      hintStyle: const TextStyle(color: Colors.grey),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
                         borderSide: BorderSide.none,
                       ),
                       filled: true,
-                      fillColor: Colors.grey.shade100,
+                      fillColor: Colors.black,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 10,
@@ -419,6 +435,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void _showAttachmentSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: const Color(0xFF1E1E1E),
       builder: (context) => Container(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -426,7 +443,10 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.image, color: Color(0xFF008751)),
-              title: const Text('Send Image from Gallery'),
+              title: const Text(
+                'Send Image from Gallery',
+                style: TextStyle(color: Colors.white),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _pickMedia(ImageSource.gallery, 'image');
@@ -434,7 +454,10 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.videocam, color: Color(0xFF008751)),
-              title: const Text('Send Video from Gallery'),
+              title: const Text(
+                'Send Video from Gallery',
+                style: TextStyle(color: Colors.white),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _pickMedia(ImageSource.gallery, 'video');
